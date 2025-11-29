@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* thoda global styling */
+body {
+  min-height: 100vh;
+}
+
+/* optional: base theme */
+.app-root {
+  @apply min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
+}
