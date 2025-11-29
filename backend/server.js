@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(
   cors({
     // origin: "http://localhost:5173",
-    origin: "https://expence-tracker-beta-gray.vercel.app/",
+    origin: "https://expence-tracker-beta-gray.vercel.app",
     credentials: true,
   })
 );
