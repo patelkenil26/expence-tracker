@@ -1,6 +1,6 @@
 // src/pages/Budgets.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { FiTarget, FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -9,38 +9,11 @@ import PageHeader from "../components/ui/PageHeader";
 import TextInput from "../components/ui/TextInput";
 import Button from "../components/ui/Button";
 
-import {
-  getBudgetsApi,
-  saveBudgetApi,
-  deleteBudgetApi,
-  getBudgetProgressApi,
-} from "../api/budgetApi";
-
-import {
-  setBudgets,
-  setBudgetProgress,
-  setBudgetsLoading,
-  setBudgetsError,
-} from "../store/budgetsSlice";
+import { useBudgetsData } from "../hooks/useBudgetsData";
 import { formatCurrency } from "../utils/format";
-
-const defaultCategories = [
-  "Salary",
-  "Freelance",
-  "Business",
-  "Food",
-  "Travel",
-  "Rent",
-  "Shopping",
-  "Bills",
-  "Entertainment",
-  "Health",
-  "Other",
-];
+import { DEFAULT_CATEGORY_NAMES } from "../constants/categories";
 
 function Budgets() {
-  const dispatch = useDispatch();
-  const { list, progress, loading } = useSelector((state) => state.budgets);
   const categoriesState = useSelector((state) => state.categories) || {};
   const customCategories = categoriesState.list || [];
 
@@ -51,13 +24,22 @@ function Budgets() {
     category: "Food",
     amount: "",
   });
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
 
-  // merge default + custom categories
+  // TanStack Query custom hook for budgets and progress
+  const {
+    budgets: list,
+    progress,
+    loading,
+    saveBudget,
+    saving,
+    deleteBudget,
+    deleting,
+  } = useBudgetsData(month, year);
+
+  // Merge default + custom categories
   const allCategories = useMemo(() => {
     const customNames = customCategories.map((c) => c.name).filter(Boolean);
-    const merged = [...defaultCategories];
+    const merged = [...DEFAULT_CATEGORY_NAMES];
     customNames.forEach((name) => {
       if (!merged.includes(name)) merged.push(name);
     });
@@ -84,44 +66,6 @@ function Budgets() {
     });
   }, [list, progressByCategory]);
 
-  // ------------ API calls ------------
-  const fetchBudgetsAndProgress = async (m = month, y = year) => {
-    try {
-      dispatch(setBudgetsLoading(true));
-      dispatch(setBudgetsError(null));
-
-      const [budgetsRes, progressRes] = await Promise.all([
-        getBudgetsApi({ month: m, year: y }),
-        getBudgetProgressApi({ month: m, year: y }),
-      ]);
-
-      const budgetsData = Array.isArray(budgetsRes.data?.budgets)
-        ? budgetsRes.data.budgets
-        : [];
-      const progressData = Array.isArray(progressRes.data?.summary)
-        ? progressRes.data.summary
-        : [];
-
-      dispatch(setBudgets(budgetsData));
-      dispatch(setBudgetProgress(progressData));
-    } catch (err) {
-      console.error("Budgets load error:", err);
-      dispatch(
-        setBudgetsError(
-          err?.response?.data?.message || "Failed to load budgets."
-        )
-      );
-      toast.error("Failed to load budgets.");
-    } finally {
-      dispatch(setBudgetsLoading(false));
-    }
-  };
-
-  useEffect(() => {
-    fetchBudgetsAndProgress();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, year]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -136,40 +80,24 @@ function Budgets() {
     }
 
     try {
-      setSaving(true);
-      await saveBudgetApi({
+      await saveBudget({
         category: form.category,
         amount: amountNum,
         month,
         year,
       });
-
-      toast.success("Budget saved successfully.");
       setForm((prev) => ({ ...prev, amount: "" }));
-      fetchBudgetsAndProgress(month, year);
-    } catch (err) {
-      console.error("Save budget error:", err);
-      const msg =
-        err?.response?.data?.message || "Failed to save budget. Try again.";
-      toast.error(msg);
-    } finally {
-      setSaving(false);
+    } catch {
+      // Error handled in TanStack mutation
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this budget?")) return;
-
+    if (!window.confirm("Delete this budget limit?")) return;
     try {
-      setDeletingId(id);
-      await deleteBudgetApi(id);
-      toast.success("Budget deleted.");
-      fetchBudgetsAndProgress(month, year);
-    } catch (err) {
-      console.error("Delete budget error:", err);
-      toast.error("Failed to delete budget.");
-    } finally {
-      setDeletingId(null);
+      await deleteBudget(id);
+    } catch {
+      // Error handled in TanStack mutation
     }
   };
 
@@ -182,35 +110,25 @@ function Budgets() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-7xl mx-auto pb-8">
       <PageHeader
-        title="Budgets"
-        subtitle="Set monthly spending limits for each category and track how close you are."
+        title="Budget Limits"
+        subtitle="Set category spending limits and monitor threshold health in real-time."
         icon={<FiTarget />}
       />
 
-      {/* Filters & summary */}
+      {/* Date Pickers Filter Bar */}
       <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400">Month</span>
+          <span className="text-slate-500 dark:text-slate-400 font-semibold">Month:</span>
           <select
             value={month}
             onChange={handleMonthChange}
-            className="rounded-lg border dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-xs"
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
           >
             {[
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
+              "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
             ].map((mLabel, idx) => (
               <option key={mLabel} value={idx + 1}>
                 {mLabel}
@@ -220,11 +138,11 @@ function Budgets() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400">Year</span>
+          <span className="text-slate-500 dark:text-slate-400 font-semibold">Year:</span>
           <select
             value={year}
             onChange={handleYearChange}
-            className="rounded-lg border dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 py-1 text-xs"
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
           >
             {Array.from({ length: 5 }).map((_, i) => {
               const y = new Date().getFullYear() - 2 + i;
@@ -237,206 +155,200 @@ function Budgets() {
           </select>
         </div>
 
-        <span className="text-[11px] text-slate-500 dark:text-slate-400">
-          Budgets apply for: {month}/{year}
+        <span className="text-xs text-slate-400 ml-auto font-medium">
+          Active Period: {month}/{year}
         </span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr,1fr]">
-        {/* Form card */}
-        <Card className="p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-2">
-            Set category budget
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Choose a category and define how much you want to spend this month.
-          </p>
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Set Budget Form (7 cols) */}
+        <div className="lg:col-span-7">
+          <Card
+            title="Set Category Limit"
+            subtitle="Choose a category and define max threshold for the month"
+          >
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3.5 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30 transition"
+                  >
+                    {allCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3 text-sm">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Category
-                </label>
-                <select
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border   dark:text-slate-300 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {allCategories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <TextInput
+                    label="Budget Limit (INR)"
+                    name="amount"
+                    type="number"
+                    min="0"
+                    value={form.amount}
+                    onChange={handleChange}
+                    placeholder="e.g. 5000"
+                  />
+                </div>
               </div>
 
-              <div>
-                <TextInput
-                  label="Budget amount (₹)"
-                  name="amount"
-                  type="number"
-                  min="0"
-                  value={form.amount}
-                  onChange={handleChange}
-                  placeholder="e.g. 5000"
-                  className="dark:text-slate-300"
-                />
+              <div className="pt-2">
+                <Button type="submit" variant="gradient" loading={saving}>
+                  Save Budget Limit
+                </Button>
               </div>
-            </div>
 
-            <div className="pt-1">
-              <Button type="submit" variant="primary" disabled={saving}>
-                {saving ? "Saving..." : "Save budget"}
-              </Button>
-            </div>
+              <p className="text-[11px] text-slate-400">
+                If a budget already exists for this category and month, saving will automatically update the threshold.
+              </p>
+            </form>
+          </Card>
+        </div>
 
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              If a budget for this category & month already exists, it will be
-              updated.
-            </p>
-          </form>
-        </Card>
+        {/* Budget Health Overview (5 cols) */}
+        <div className="lg:col-span-5">
+          <Card
+            title="Threshold Health"
+            subtitle="Live status of category utilization"
+          >
+            {loading ? (
+              <div className="py-6 text-center text-xs text-slate-400 animate-pulse">
+                Loading budget health...
+              </div>
+            ) : rows.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                No budgets set for this month yet.
+              </div>
+            ) : (
+              <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1">
+                {rows.map((row) => {
+                  const pct = Math.round(row.percentage || 0);
+                  const isOver = pct >= 100;
+                  const isWarning = pct >= 75 && pct < 100;
 
-        {/* Quick summary card */}
-        <Card className="p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-2">
-            Budget health
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            See which categories are on track and which are close to crossing
-            the limit.
-          </p>
+                  const barColor = isOver
+                    ? "bg-rose-500"
+                    : isWarning
+                    ? "bg-amber-500"
+                    : "bg-emerald-500";
 
-          {loading ? (
-            <div className="py-4 text-[11px] text-slate-500 dark:text-slate-400">
-              Loading summary...
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="py-4 text-[11px] text-slate-500 dark:text-slate-400">
-              No budgets set for this month yet.
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-60 overflow-auto pr-1">
-              {rows.map((row) => {
-                const pct = row.percentage || 0;
-                let barClass =
-                  "h-1.5 rounded-full transition-all duration-300 ";
-                if (pct >= 100) {
-                  barClass += "bg-rose-500";
-                } else if (pct >= 70) {
-                  barClass += "bg-amber-500";
-                } else {
-                  barClass += "bg-emerald-500";
-                }
-
-                return (
-                  <div key={row._id} className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="font-medium text-slate-700 dark:text-slate-200">
-                        {row.category}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {formatCurrency(row.spent)} /{" "}
-                        {formatCurrency(row.amount)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className={barClass}
-                        style={{ width: `${Math.min(pct, 120)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                      <span>{pct}% used</span>
-                      {pct >= 100 ? (
-                        <span className="text-rose-500">
-                          Over budget by{" "}
-                          {formatCurrency(row.spent - row.amount)}
+                  return (
+                    <div key={row._id} className="space-y-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-800 dark:text-slate-200">
+                          {row.category}
                         </span>
-                      ) : pct >= 70 ? (
-                        <span className="text-amber-500">
-                          Close to limit – watch spending
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                          {formatCurrency(row.spent)} / {formatCurrency(row.amount)}
                         </span>
-                      ) : (
-                        <span className="text-emerald-500">
-                          On track – within budget
-                        </span>
-                      )}
+                      </div>
+
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+
+                      <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                        <span>{pct}% utilized</span>
+                        {isOver ? (
+                          <span className="text-rose-500 font-bold">
+                            Over budget by {formatCurrency(row.spent - row.amount)}
+                          </span>
+                        ) : isWarning ? (
+                          <span className="text-amber-500 font-bold">
+                            Close to limit
+                          </span>
+                        ) : (
+                          <span className="text-emerald-500 font-bold">
+                            On track
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
 
-      {/* Table of budgets */}
-      <Card className="p-4 sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-2">
-          All budgets for {month}/{year}
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-          Manage your category-wise limits. Delete entries you no longer need.
-        </p>
-
+      {/* Table of all active budgets */}
+      <Card
+        title={`All Budgets for ${month}/${year}`}
+        subtitle="Manage limits and delete obsolete entries"
+      >
         {loading ? (
-          <div className="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="py-6 text-center text-xs text-slate-400 animate-pulse">
             Loading budgets...
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            No budgets defined yet.
+          <div className="py-8 text-center text-xs text-slate-400">
+            No budgets defined for this month.
           </div>
         ) : (
           <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
+            <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                  <th className="py-2 pr-3">Category</th>
-                  <th className="py-2 pr-3">Budget</th>
-                  <th className="py-2 pr-3">Spent</th>
-                  <th className="py-2 pr-3">Used</th>
-                  <th className="py-2 pr-3 text-right">Actions</th>
+                  <th className="py-3 pr-3 font-semibold">Category</th>
+                  <th className="py-3 pr-3 font-semibold">Monthly Limit</th>
+                  <th className="py-3 pr-3 font-semibold">Amount Spent</th>
+                  <th className="py-3 pr-3 font-semibold">Status</th>
+                  <th className="py-3 pr-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const pct = row.percentage || 0;
-                  return (
-                    <tr
-                      key={row._id}
-                      className="border-b border-slate-100 dark:border-slate-800"
-                    >
-                      <td className="py-2 pr-3 text-slate-700 dark:text-slate-200">
-                        {row.category}
-                      </td>
-                      <td className="py-2 pr-3 text-slate-700 dark:text-slate-200">
-                        {formatCurrency(row.amount)}
-                      </td>
-                      <td className="py-2 pr-3 text-slate-700 dark:text-slate-200">
-                        {formatCurrency(row.spent)}
-                      </td>
-                      <td className="py-2 pr-3 text-slate-700 dark:text-slate-200">
-                        {pct}%
-                      </td>
-                      <td className="py-2 pr-3 text-right">
-                        <button
-                          onClick={() => handleDelete(row._id)}
-                          disabled={deletingId === row._id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-[10px] hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-300"
-                        >
-                          <FiTrash2 />
-                          <span>
-                            {deletingId === row._id ? "Deleting..." : "Delete"}
-                          </span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {rows.map((row) => (
+                  <tr
+                    key={row._id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-100">
+                      {row.category}
+                    </td>
+                    <td className="py-3 pr-3 font-extrabold text-slate-900 dark:text-slate-100">
+                      {formatCurrency(row.amount)}
+                    </td>
+                    <td className="py-3 pr-3 font-bold text-slate-600 dark:text-slate-300">
+                      {formatCurrency(row.spent)}
+                    </td>
+                    <td className="py-3 pr-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          (row.percentage || 0) >= 100
+                            ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                            : (row.percentage || 0) >= 75
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                        }`}
+                      >
+                        {Math.round(row.percentage || 0)}%
+                      </span>
+                    </td>
+                    <td className="py-3 pr-3 text-right">
+                      <button
+                        onClick={() => handleDelete(row._id)}
+                        disabled={deleting}
+                        className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
+                        title="Delete budget"
+                      >
+                        <FiTrash2 className="text-[10px]" />
+                        <span>Delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -16,7 +16,7 @@ function TextInput({
   return (
     <div className={`space-y-1 ${className}`}>
       {label && (
-        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
           {label}
         </label>
       )}
@@ -26,8 +26,10 @@ function TextInput({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-lg border px-3 py-2 text-sm outline-none bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 ${
-          error ? "border-rose-400" : ""
+        className={`w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors duration-150 bg-[var(--color-surface)] text-[var(--color-text-main)] placeholder:text-slate-400 dark:placeholder:text-slate-500 border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30 ${
+          error
+            ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20"
+            : ""
         }`}
         {...rest}
       />
@@ -37,7 +39,9 @@ function TextInput({
         </p>
       )}
       {error && (
-        <p className="text-[11px] text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+          {error}
+        </p>
       )}
     </div>
   );

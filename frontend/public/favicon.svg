@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="brandBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#307FE2"/>
+      <stop offset="50%" stop-color="#003087"/>
+      <stop offset="100%" stop-color="#00205B"/>
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE264"/>
+      <stop offset="100%" stop-color="#F2A900"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Container -->
+  <rect width="128" height="128" rx="30" fill="url(#brandBg)" filter="url(#shadow)"/>
+  <rect x="2" y="2" width="124" height="124" rx="28" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+  <!-- Rupee Symbol -->
+  <g fill="none" stroke="url(#goldAccent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 38h46"/>
+    <path d="M40 52h36"/>
+    <path d="M52 38c20 0 20 26 0 26H48l28 36"/>
+  </g>
+  <!-- Pulse Accent -->
+  <circle cx="96" cy="34" r="5" fill="#FFE264"/>
+</svg>

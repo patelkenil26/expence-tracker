@@ -1,100 +1,36 @@
 // src/pages/Categories.jsx
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
+import React, { useState } from "react";
 import { FiTag, FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
-import { getCategoryUsageStatsApi } from "../api/statsApi";
 import { formatCurrency } from "../utils/format";
 
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 
-import {
-  getCategoriesApi,
-  createCategoryApi,
-  updateCategoryApi,
-  deleteCategoryApi,
-} from "../api/categoryApi";
-import { setCategories, setCategoryLoading } from "../store/categorySlice";
+import { useCategoriesData } from "../hooks/useCategoriesData";
 import CategoryForm from "../components/category/CategoryForm";
 import DeleteConfirm from "../components/category/DeleteConfirm";
-import { useCallback } from "react";
 
 function Categories() {
-  const dispatch = useDispatch();
-  const { list, loading } = useSelector((state) => state.categories);
-
   const [showForm, setShowForm] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // ===========================
-  // Category usage stats (income + expense per category)
-  // ===========================
-  const [usage, setUsage] = useState([]);
-  const [usageLoading, setUsageLoading] = useState(false);
+  // TanStack Query custom hook for categories & usage
+  const {
+    categories: list,
+    categoriesLoading,
+    usage,
+    usageLoading,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  } = useCategoriesData();
 
-  const fetchCategories = async () => {
-    try {
-      dispatch(setCategoryLoading(true));
-      const res = await getCategoriesApi();
-      dispatch(setCategories(res.data.categories || []));
-    } catch {
-      toast.error("Failed to load categories");
-    } finally {
-      dispatch(setCategoryLoading(false));
-    }
-  };
+  // Merge usage stats with categories
+  const usageMap = new Map(usage.map((u) => [u.category, u]));
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategoryUsage = useCallback(async () => {
-    try {
-      setUsageLoading(true);
-
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const year = now.getFullYear();
-
-      const res = await getCategoryUsageStatsApi({
-        scope: "month", // this month only
-        month,
-        year,
-      });
-
-      const arr = Array.isArray(res.data?.data) ? res.data.data : [];
-      setUsage(arr);
-    } catch (err) {
-      console.error("Category usage fetch error:", err);
-      // optional: toast.error("Failed to load category usage.");
-    } finally {
-      setUsageLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCategoryUsage();
-  }, [fetchCategoryUsage]);
-
-  // ===========================
-  // Merge: categories master + usage stats
-  // ===========================
-  // Redux / existing categories list (default + custom)
-  const categoriesState = useSelector(
-    (state) => state.categories || state.category || { list: [] }
-  );
-  const { list: categoriesList = [] } = categoriesState;
-
-  // usage ko map bana dete hain fast lookup ke liye
-  const usageMap = new Map(
-    usage.map((u) => [u.category, u]) // key: category name
-  );
-
-  // UI ke liye merge: har category + uska income/expense
-  const categoriesWithUsage = categoriesList.map((cat) => {
+  const categoriesWithUsage = list.map((cat) => {
     const stat = usageMap.get(cat.name) || { totalIncome: 0, totalExpense: 0 };
     return {
       ...cat,
@@ -103,9 +39,8 @@ function Categories() {
     };
   });
 
-  // koi aisi categories jo transactions me hain, par categoriesList me nahi
   const extraFromUsage = usage
-    .filter((u) => !categoriesList.some((c) => c.name === u.category))
+    .filter((u) => !list.some((c) => c.name === u.category))
     .map((u) => ({
       name: u.category,
       type: "unknown",
@@ -116,100 +51,108 @@ function Categories() {
 
   const finalCategoryUsage = [...categoriesWithUsage, ...extraFromUsage];
 
-  // ===========================
-  // CRUD handlers
-  // ===========================
   const handleSave = async (data) => {
     try {
       if (editCategory) {
-        await updateCategoryApi(editCategory._id, data);
-        toast.success("Category updated");
+        await updateCategory({ id: editCategory._id, data });
       } else {
-        await createCategoryApi(data);
-        toast.success("Category created");
+        await createCategory(data);
       }
       setShowForm(false);
       setEditCategory(null);
-      await fetchCategories();
-      await fetchCategoryUsage(); // usage bhi refresh
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Something went wrong");
+    } catch {
+      // Handled in TanStack mutation
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteCategoryApi(deleteTarget._id);
-      toast.success("Category deleted");
+      await deleteCategory(deleteTarget._id);
       setDeleteTarget(null);
-      await fetchCategories();
-      await fetchCategoryUsage(); // usage bhi refresh
     } catch {
-      toast.error("Failed to delete");
+      // Handled in TanStack mutation
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-7xl mx-auto pb-8">
       <PageHeader
-        title="Categories"
-        subtitle="Manage your transaction categories and see income/expense usage."
+        title="Category Manager"
+        subtitle="Organize your income and expense categories, customize tags, and review usage."
         icon={<FiTag />}
-      />
-
-      {/* ========== CARD 1: CATEGORY LIST (CRUD) ========== */}
-      <Card className="p-4 sm:p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">Your Categories</h3>
+        actions={
           <Button
-            variant="primary"
+            variant="gradient"
             onClick={() => {
               setEditCategory(null);
               setShowForm(true);
             }}
           >
-            <FiPlus className="mr-1" /> Add Category
+            <FiPlus />
+            <span>Add Category</span>
           </Button>
-        </div>
+        }
+      />
 
-        {loading ? (
-          <p className="text-xs text-slate-500 dark:text-slate-300">
-            Loading...
+      {/* Card 1: Custom Categories */}
+      <Card
+        title="Custom Categories"
+        subtitle="Personalized categories created for your transactions"
+      >
+        {categoriesLoading ? (
+          <p className="text-xs text-slate-400 py-4 animate-pulse">
+            Loading categories...
           </p>
         ) : list.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-300">
-            No categories yet.
-          </p>
+          <div className="py-8 text-center space-y-2">
+            <p className="text-xs text-slate-400">
+              No custom categories yet. Add one to start organizing.
+            </p>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => {
+                setEditCategory(null);
+                setShowForm(true);
+              }}
+            >
+              Create first category
+            </Button>
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {list.map((c) => (
               <div
                 key={c._id}
-                className="p-3 rounded-xl border dark:border-slate-700 bg-white dark:bg-slate-950 flex justify-between items-center"
+                className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 dark:bg-slate-900/60 flex justify-between items-center hover:border-slate-300 dark:hover:border-slate-700 transition"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <span
-                    className="h-4 w-4 rounded"
+                    className="h-4 w-4 rounded-full shadow-sm shrink-0"
                     style={{ background: c.color }}
                   />
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{c.name}</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
+                    {c.name}
+                  </span>
                 </div>
                 <div className="flex gap-2 items-center">
                   <button
-                    className="text-indigo-500 hover:text-indigo-600"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 transition cursor-pointer"
                     onClick={() => {
                       setEditCategory(c);
                       setShowForm(true);
                     }}
+                    title="Edit category"
                   >
-                    <FiEdit />
+                    <FiEdit className="text-xs" />
                   </button>
                   <button
-                    className="text-rose-500 hover:text-rose-600"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                     onClick={() => setDeleteTarget(c)}
+                    title="Delete category"
                   >
-                    <FiTrash2 />
+                    <FiTrash2 className="text-xs" />
                   </button>
                 </div>
               </div>
@@ -218,78 +161,57 @@ function Categories() {
         )}
       </Card>
 
-      {/* ========== CARD 2: CATEGORY-WISE INCOME & EXPENSE ========== */}
-      <Card className="p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Category wise income & expense (this month)
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              How much has been spent this month in each category.
-            </p>
-          </div>
-        </div>
-
+      {/* Card 2: Category Usage & Cash Flow */}
+      <Card
+        title="Category Cash Flow"
+        subtitle="Cumulative income and expenses logged per category for this month"
+      >
         {usageLoading ? (
-          <div className="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            Loading category usage...
+          <div className="py-6 text-center text-xs text-slate-400 animate-pulse">
+            Loading category metrics...
           </div>
         ) : finalCategoryUsage.length === 0 ? (
-          <div className="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            No transactions received for this month yet.
+          <div className="py-8 text-center text-xs text-slate-400">
+            No transactions logged this month yet.
           </div>
         ) : (
           <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
+            <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                  <th className="py-2 pr-3">Category</th>
-                  <th className="py-2 pr-3">Type</th>
-                  <th className="py-2 pr-3 text-right">Total Income</th>
-                  <th className="py-2 pr-3 text-right">Total Expense</th>
-                  <th className="py-2 pr-3 text-right">Net</th>
+                  <th className="py-3 pr-3 font-semibold">Category</th>
+                  <th className="py-3 pr-3 font-semibold text-right">Inflow</th>
+                  <th className="py-3 pr-3 font-semibold text-right">Outflow</th>
+                  <th className="py-3 pr-3 font-semibold text-right">Net</th>
                 </tr>
               </thead>
-              <tbody>
-                {finalCategoryUsage.map((cat) => {
-                  const income = cat.totalIncome || 0;
-                  const expense = cat.totalExpense || 0;
-                  const net = income - expense;
-
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {finalCategoryUsage.map((cat, i) => {
+                  const net = (cat.totalIncome || 0) - (cat.totalExpense || 0);
                   return (
                     <tr
-                      key={cat._id || cat.name}
-                      className="border-b border-slate-100 dark:border-slate-800"
+                      key={cat._id || cat.name || i}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
                     >
-                      <td className="py-2 pr-3">
-                        <span className="inline-flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: cat.color || "#64748b" }}
-                          />
-                          <span className="text-slate-800 dark:text-slate-100">
-                            {cat.name}
-                          </span>
-                        </span>
+                      <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">
+                        {cat.name}
                       </td>
-                      <td className="py-2 pr-3 text-slate-500 dark:text-slate-400">
-                        {cat.type || "—"}
+                      <td className="py-3 pr-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                        {cat.totalIncome > 0 ? `+${formatCurrency(cat.totalIncome)}` : "—"}
                       </td>
-                      <td className="py-2 pr-3 text-right text-emerald-500">
-                        {formatCurrency(income)}
-                      </td>
-                      <td className="py-2 pr-3 text-right text-rose-500">
-                        {formatCurrency(expense)}
+                      <td className="py-3 pr-3 text-right font-bold text-rose-600 dark:text-rose-400">
+                        {cat.totalExpense > 0 ? `-${formatCurrency(cat.totalExpense)}` : "—"}
                       </td>
                       <td
-                        className={
-                          "py-2 pr-3 text-right font-semibold " +
-                          (net >= 0 ? "text-emerald-500" : "text-rose-500")
-                        }
+                        className={`py-3 pr-3 text-right font-extrabold ${
+                          net > 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : net < 0
+                            ? "text-rose-600 dark:text-rose-400"
+                            : "text-slate-400"
+                        }`}
                       >
-                        {net >= 0 ? "+" : "-"}
-                        {formatCurrency(Math.abs(net))}
+                        {formatCurrency(net)}
                       </td>
                     </tr>
                   );
@@ -300,24 +222,31 @@ function Categories() {
         )}
       </Card>
 
-      {/* ========== MODALS ========== */}
+      {/* Form Modal */}
       {showForm && (
-        <CategoryForm
-          defaultValues={editCategory}
-          onClose={() => {
-            setShowForm(false);
-            setEditCategory(null);
-          }}
-          onSubmit={handleSave}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+            <h3 className="text-base font-bold text-[var(--color-text-main)] mb-4 pb-2 border-b border-[var(--color-border)]">
+              {editCategory ? "Edit Category" : "New Category"}
+            </h3>
+            <CategoryForm
+              initialData={editCategory}
+              onSubmit={handleSave}
+              onCancel={() => {
+                setShowForm(false);
+                setEditCategory(null);
+              }}
+            />
+          </div>
+        </div>
       )}
 
+      {/* Delete Modal */}
       {deleteTarget && (
         <DeleteConfirm
-          title="Delete Category"
-          message={`Are you sure you want to delete "${deleteTarget.name}"?`}
-          onCancel={() => setDeleteTarget(null)}
+          item={deleteTarget}
           onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

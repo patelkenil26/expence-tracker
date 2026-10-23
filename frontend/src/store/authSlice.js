@@ -5,12 +5,23 @@ const getInitialAuthState = () => {
     return { user: null, token: null };
   }
 
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
-  return {
-    token: token || null,
-    user: user ? JSON.parse(user) : null,
-  };
+  try {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+    let user = null;
+    if (userStr && userStr !== "undefined" && userStr !== "null") {
+      user = JSON.parse(userStr);
+    }
+    return {
+      token: token || null,
+      user,
+    };
+  } catch (e) {
+    console.error("Failed to parse stored user:", e);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    return { user: null, token: null };
+  }
 };
 
 const initialState = {

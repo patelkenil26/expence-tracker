@@ -1,14 +1,173 @@
 @import "tailwindcss";
 
-
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* thoda global styling */
-body {
-  min-height: 100vh;
+/* ==========================================================================
+   GLOBAL DESIGN SYSTEM & DYNAMIC CSS TOKENS
+   Default: Combination 2 (Blue Navy, Cornflower, Periwinkle, Pearl)
+   Active Theme controller in theme.js dynamically manages these variables.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Global Surfaces & Canvas (Light Mode) */
+  --color-bg-base: #f4f1ee;          /* Pearl canvas */
+  --color-surface: #ffffff;          /* Pure crisp white cards */
+  --color-surface-elevated: #ffffff;
+  --color-surface-subtle: #f9f8f6;
+  
+  /* Global Borders */
+  --color-border: #c0cfff;           /* Periwinkle border */
+  --color-border-subtle: rgba(192, 207, 255, 0.5);
+  --color-border-focus: #588dd2;     /* Cornflower focus */
+
+  /* Global Typography */
+  --color-text-main: #10276b;        /* Deep Blue text */
+  --color-text-secondary: #10276b;
+  --color-text-muted: #4a6096;
+
+  /* Brand Accents & Button Controls */
+  --color-primary: #588dd2;          /* Cornflower accent */
+  --color-primary-hover: #4778b8;
+  --color-primary-text: #ffffff;
+  --color-secondary: #10276b;
+  --color-accent: #588dd2;
+  --glow-primary: rgba(88, 141, 210, 0.25);
+
+  /* Functional Status */
+  --color-income: #10b981;
+  --color-expense: #f43f5e;
+  --color-warning: #f59e0b;
 }
 
-/* optional: base theme */
-.app-root {
-  @apply min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
+html.dark {
+  color-scheme: dark;
+
+  /* Global Surfaces & Canvas (Dark Mode) */
+  --color-bg-base: #10276b;          /* Blue skin midnight canvas */
+  --color-surface: #16317b;          /* Deep blue card surface */
+  --color-surface-elevated: #1e3e94; /* Elevated container / modal */
+  --color-surface-subtle: #132a70;
+
+  /* Global Borders */
+  --color-border: #284fa8;           /* Periwinkle-navy border */
+  --color-border-subtle: rgba(192, 207, 255, 0.2);
+  --color-border-focus: #588dd2;
+
+  /* Global Typography */
+  --color-text-main: #f4f1ee;        /* Pearl crisp warm white */
+  --color-text-secondary: #c0cfff;   /* Periwinkle */
+  --color-text-muted: #c0cfff;
+
+  /* Brand Accents & Button Controls */
+  --color-primary: #588dd2;          /* Cornflower accent */
+  --color-primary-hover: #4778b8;
+  --color-primary-text: #ffffff;
+  --color-secondary: #c0cfff;
+  --color-accent: #c0cfff;
+  --glow-primary: rgba(88, 141, 210, 0.45);
+
+  /* Functional Status */
+  --color-income: #34d399;
+  --color-expense: #fb7185;
+  --color-warning: #fbbf24;
+}
+
+/* ==========================================================================
+   BASE & SMOOTH TRANSITIONS
+   ========================================================================== */
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+}
+
+/* Custom modern scrollbar matching active palette */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary);
+}
+
+/* ==========================================================================
+   GLOBAL THEME REUSABLE UTILITIES
+   ========================================================================== */
+
+.bg-canvas {
+  background-color: var(--color-bg-base);
+}
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-surface-elevated {
+  background-color: var(--color-surface-elevated);
+}
+.bg-primary-theme {
+  background-color: var(--color-primary);
+}
+.text-main {
+  color: var(--color-text-main);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-primary-theme {
+  color: var(--color-primary);
+}
+.text-primary-contrast {
+  color: var(--color-primary-text);
+}
+.border-theme {
+  border-color: var(--color-border);
+}
+.border-theme-subtle {
+  border-color: var(--color-border-subtle);
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-border);
+}
+html.dark .glass-card {
+  background: rgba(22, 49, 123, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-border);
+}
+
+.glow-primary {
+  box-shadow: 0 0 25px -4px var(--color-primary);
+}
+.glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+}
+.glow-rose {
+  box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.25);
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.pulse-subtle {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

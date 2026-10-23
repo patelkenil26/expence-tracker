@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { DEFAULT_CATEGORY_NAMES } from "../constants/categories";
 
 const categorySlice = createSlice({
   name: "categories",
@@ -8,7 +9,7 @@ const categorySlice = createSlice({
   },
   reducers: {
     setCategories(state, action) {
-      state.list = action.payload;
+      state.list = action.payload || [];
     },
     setCategoryLoading(state, action) {
       state.loading = action.payload;
@@ -17,22 +18,8 @@ const categorySlice = createSlice({
 });
 
 export const selectMergedCategoryNames = (state) => {
-  const defaults = [
-    "Salary",
-    "Freelance",
-    "Business",
-    "Food",
-    "Travel",
-    "Rent",
-    "Shopping",
-    "Bills",
-    "Entertainment",
-    "Health",
-    "Other",
-  ];
-
-  const custom = state.categories?.list?.map((cat) => cat.name) || [];
-  return [...new Set([...defaults, ...custom])];
+  const custom = state.categories?.list?.map((cat) => cat.name).filter(Boolean) || [];
+  return [...new Set([...DEFAULT_CATEGORY_NAMES, ...custom])];
 };
 
 export const { setCategories, setCategoryLoading } = categorySlice.actions;

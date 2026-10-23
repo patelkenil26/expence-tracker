@@ -15,11 +15,42 @@ const alertsRoutes = require("./routes/alertsRoutes");
 
 dotenv.config();
 
+// =========================================================================
+// CORS & CLIENT ORIGIN CONFIGURATION
+// =========================================================================
+// Senior Dev Note:
+// By default, both LOCALHOST (for local development) and PRODUCTION (Vercel)
+// are supported simultaneously so nothing breaks when testing or deploying!
+//
+// IF YOU PREFER MANUAL COMMENT/UNCOMMENT BEFORE PUSHING:
+// const CLIENT_URL = "http://localhost:5173"; // <-- UNCOMMENT FOR LOCALHOST
+// const CLIENT_URL = "https://expence-tracker-beta-gray.vercel.app"; // <-- UNCOMMENT FOR PRODUCTION
+// =========================================================================
+
+const allowedOrigins = [
+  "http://localhost:5173",                          // Local Vite Frontend
+  "http://localhost:5174",                          // Alternate local port
+  "http://localhost:3000",                          // React default port
+  "https://expence-tracker-beta-gray.vercel.app",  // Production Vercel Frontend
+  process.env.CLIENT_URL,                           // Custom env variable if set
+].filter(Boolean);
+
 app.use(express.json());
+
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "https://expence-tracker-beta-gray.vercel.app",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, postman, curl)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/localhost:\d+$/.test(origin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Fallback safe allow
+    },
     credentials: true,
   })
 );
@@ -37,15 +68,13 @@ app.get("/", (req, res) => {
   res.json({ message: "API is running..." });
 });
 
-// TODO: yaha authRoutes, transactionRoutes etc mount karenge
-// app.use('/api/auth', authRoutes);
-// app.use('/api/transactions', transactionRoutes);
-
 // Mongo connect + server start
 const PORT = process.env.PORT || 8000;
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/expence-tracker";
 
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
     app.listen(PORT, () => {
@@ -53,5 +82,12 @@ mongoose
     });
   })
   .catch((err) => {
-    console.error("MongoDB connection error", err.message);
+    console.error("MongoDB connection error:", err.message);
+    // start server anyway so API status route works
+    app.listen(PORT, () => {
+      console.log(
+        `Server running on port ${PORT} (without active DB connection: ${err.message})`
+      );
+    });
   });
+

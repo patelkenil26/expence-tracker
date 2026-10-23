@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import Card from "../ui/Card";
 import TextInput from "../ui/TextInput";
 import Button from "../ui/Button";
+import { CHART_COLORS } from "../../constants/theme";
 
-export default function CategoryForm({ defaultValues, onClose, onSubmit }) {
+export default function CategoryForm({ defaultValues, initialData, onClose, onSubmit, onCancel }) {
+  const initial = initialData || defaultValues;
   const [form, setForm] = useState({
-    name: defaultValues?.name || "",
-    color: defaultValues?.color || "#4f46e5",
+    name: initial?.name || "",
+    color: initial?.color || CHART_COLORS[0],
   });
 
   const handleChange = (e) => {
@@ -14,45 +16,66 @@ export default function CategoryForm({ defaultValues, onClose, onSubmit }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+    if (!form.name.trim()) return;
+    onSubmit(form);
+  };
+
+  const handleClose = onCancel || onClose;
+
   return (
-    <div className="fixed inset-0 bg-black/40 z-20 flex items-center justify-center p-4 backdrop-blur-sm">
-      <Card className="p-4 w-full max-w-md bg-white dark:bg-slate-950">
-        <h2 className="text-sm font-semibold mb-3">
-          {defaultValues ? "Edit Category" : "Add Category"}
-        </h2>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <TextInput
+        label="Category Name"
+        name="name"
+        value={form.name}
+        onChange={handleChange}
+        placeholder="e.g. Groceries, Investment, Books"
+        required
+        autoFocus
+      />
 
-        <div className="space-y-3">
-          <TextInput
-            label="Category Name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="e.g. Food, Travel, Salary"
-          />
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-600 dark:text-slate-400">
-              Color
-            </label>
+      <div>
+        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+          Category Color Tag
+        </label>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {CHART_COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, color }))}
+              style={{ backgroundColor: color }}
+              className={`h-7 w-7 rounded-full transition-transform cursor-pointer ${
+                form.color === color
+                  ? "ring-2 ring-offset-2 ring-[var(--color-primary)] scale-110"
+                  : "hover:scale-105"
+              }`}
+              aria-label={`Select color ${color}`}
+            />
+          ))}
+          <div className="flex items-center gap-1.5 ml-2">
             <input
               type="color"
               name="color"
               value={form.color}
               onChange={handleChange}
-              className="h-9 w-16 rounded border dark:border-slate-600 cursor-pointer"
+              className="h-8 w-10 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer bg-transparent"
+              title="Custom color"
             />
           </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={() => onSubmit(form)}>
-              {defaultValues ? "Save Changes" : "Add Category"}
-            </Button>
-          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+
+      <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <Button variant="ghost" size="sm" onClick={handleClose}>
+          Cancel
+        </Button>
+        <Button variant="gradient" size="sm" type="submit">
+          {initial ? "Save Changes" : "Create Category"}
+        </Button>
+      </div>
+    </form>
   );
 }

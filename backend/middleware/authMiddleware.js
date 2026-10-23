@@ -15,9 +15,9 @@ exports.protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || "expence_tracker_jwt_secret_dev_key";
+    const decoded = jwt.verify(token, secret);
     req.userId = decoded.userId;
-    console.log(req.userId,"req.userId Value")
     next();
   } catch (error) {
     console.error('Auth error:', error.message);

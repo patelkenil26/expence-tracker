@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+// src/pages/Goals.jsx
+import React, { useState } from "react";
 import { FiFlag, FiPlus, FiTrash2, FiTarget, FiTrendingUp } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -6,24 +7,13 @@ import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 import TextInput from "../components/ui/TextInput";
-import {
-  getGoalsApi,
-  createGoalApi,
-  deleteGoalApi,
-  contributeGoalApi,
-} from "../api/goalsApi";
+import { useGoalsData } from "../hooks/useGoalsData";
 import { formatCurrency, formatDate } from "../utils/format";
 
 function Goals() {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(false);
-
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-
   const [contribGoal, setContribGoal] = useState(null);
   const [contribAmount, setContribAmount] = useState("");
-  const [contribLoading, setContribLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -32,30 +22,18 @@ function Goals() {
     note: "",
   });
 
-  // -------------------------
-  // Fetch goals
-  // -------------------------
-  const fetchGoals = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await getGoalsApi();
-      const list = Array.isArray(res.data?.data) ? res.data.data : [];
-      setGoals(list);
-    } catch (err) {
-      console.error("Get goals error:", err);
-      toast.error("Failed to load goals.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // TanStack Query custom hook for goals
+  const {
+    goals,
+    loading,
+    createGoal,
+    creating,
+    deleteGoal,
+    deleting,
+    addContribution,
+    contributing,
+  } = useGoalsData();
 
-  useEffect(() => {
-    fetchGoals();
-  }, [fetchGoals]);
-
-  // -------------------------
-  // Add goal
-  // -------------------------
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -69,14 +47,12 @@ function Goals() {
     }
 
     try {
-      setAddLoading(true);
-      await createGoalApi({
+      await createGoal({
         name: form.name,
         targetAmount: Number(form.targetAmount),
         deadline: form.deadline || undefined,
         note: form.note || "",
       });
-      toast.success("Goal created.");
       setShowAddModal(false);
       setForm({
         name: "",
@@ -84,36 +60,20 @@ function Goals() {
         deadline: "",
         note: "",
       });
-      fetchGoals();
-    } catch (err) {
-      console.error("Create goal error:", err);
-      const msg =
-        err?.response?.data?.message ||
-        "Failed to create goal. Please try again.";
-      toast.error(msg);
-    } finally {
-      setAddLoading(false);
+    } catch {
+      // Handled in TanStack mutation
     }
   };
 
-  // -------------------------
-  // Delete goal
-  // -------------------------
   const handleDeleteGoal = async (id) => {
-    if (!window.confirm("Delete this goal?")) return;
+    if (!window.confirm("Delete this savings goal?")) return;
     try {
-      await deleteGoalApi(id);
-      toast.success("Goal deleted.");
-      setGoals((prev) => prev.filter((g) => g._id !== id));
-    } catch (err) {
-      console.error("Delete goal error:", err);
-      toast.error("Failed to delete goal.");
+      await deleteGoal(id);
+    } catch {
+      // Handled in TanStack mutation
     }
   };
 
-  // -------------------------
-  // Contribute to goal
-  // -------------------------
   const openContribModal = (goal) => {
     setContribGoal(goal);
     setContribAmount("");
@@ -130,193 +90,157 @@ function Goals() {
     }
 
     try {
-      setContribLoading(true);
-      await contributeGoalApi(contribGoal._id, amt);
-      toast.success("Contribution added.");
+      await addContribution({ id: contribGoal._id, amount: amt });
       setContribGoal(null);
       setContribAmount("");
-      fetchGoals();
-    } catch (err) {
-      console.error("Contribute goal error:", err);
-      const msg =
-        err?.response?.data?.message ||
-        "Failed to add contribution. Please try again.";
-      toast.error(msg);
-    } finally {
-      setContribLoading(false);
+    } catch {
+      // Handled in TanStack mutation
     }
   };
 
-  // -------------------------
-  // Derived summary
-  // -------------------------
-  const totalTarget = goals.reduce(
-    (sum, g) => sum + (g.targetAmount || 0),
-    0
-  );
-  const totalCurrent = goals.reduce(
-    (sum, g) => sum + (g.currentAmount || 0),
-    0
-  );
+  // Derived summaries
+  const totalTarget = goals.reduce((sum, g) => sum + (g.targetAmount || 0), 0);
+  const totalCurrent = goals.reduce((sum, g) => sum + (g.currentAmount || 0), 0);
   const completedCount = goals.filter((g) => g.status === "completed").length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-7xl mx-auto pb-8">
       <PageHeader
-        title="Goals"
-        subtitle="Set financial goals and track your progress over time."
+        title="Savings Goals"
+        subtitle="Set milestone financial goals, allocate savings, and track completion progress."
         icon={<FiFlag />}
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowAddModal(true)}
-          >
-            <FiPlus className="text-xs" />
-            <span className="text-xs sm:text-sm">Add Goal</span>
+          <Button variant="gradient" onClick={() => setShowAddModal(true)}>
+            <FiPlus />
+            <span>New Savings Goal</span>
           </Button>
         }
       />
 
-      {/* Summary cards */}
+      {/* KPI Cards Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Total target amount
-              </p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-50 mt-1">
-                {formatCurrency(totalTarget)}
-              </p>
-            </div>
-            <FiTarget className="text-slate-400 dark:text-slate-500 text-xl" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Saved towards goals
-              </p>
-              <p className="text-lg font-semibold text-emerald-500 mt-1">
-                {formatCurrency(totalCurrent)}
-              </p>
-            </div>
-            <FiTrendingUp className="text-emerald-400 text-xl" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Completed goals
-              </p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-50 mt-1">
-                {completedCount} / {goals.length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Goals list */}
-      <Card className="p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              All goals
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Create savings targets and monitor how close you are.
-            </p>
-          </div>
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+            Total Target
+          </p>
+          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            {formatCurrency(totalTarget)}
+          </p>
+          <p className="text-[11px] text-slate-400">Target across all active goals</p>
         </div>
 
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+            Current Savings
+          </p>
+          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            {formatCurrency(totalCurrent)}
+          </p>
+          <p className="text-[11px] text-slate-400">
+            {totalTarget > 0 ? `${Math.round((totalCurrent / totalTarget) * 100)}% achieved` : "0% achieved"}
+          </p>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+            Milestones Completed
+          </p>
+          <p className="text-2xl font-black text-[var(--color-primary)]">
+            {completedCount} / {goals.length}
+          </p>
+          <p className="text-[11px] text-slate-400">Goals reached 100% target</p>
+        </div>
+      </div>
+
+      {/* Goals Cards Grid */}
+      <Card
+        title="Active Goals"
+        subtitle="Manage contributions and track progress bars"
+      >
         {loading ? (
-          <div className="py-6 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            Loading goals...
+          <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
+            Loading savings goals...
           </div>
         ) : goals.length === 0 ? (
-          <div className="py-6 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            No goals yet. Create your first saving goal.
+          <div className="py-12 text-center space-y-2">
+            <p className="text-xs text-slate-400">No savings goals created yet.</p>
+            <Button size="xs" variant="outline" onClick={() => setShowAddModal(true)}>
+              Create your first savings goal
+            </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {goals.map((goal) => {
-              const target = goal.targetAmount || 0;
-              const current = goal.currentAmount || 0;
-              const percent =
-                target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-
-              const isCompleted = goal.status === "completed";
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {goals.map((g) => {
+              const current = g.currentAmount || 0;
+              const target = g.targetAmount || 1;
+              const pct = Math.min(100, Math.round((current / target) * 100));
+              const isCompleted = g.status === "completed" || pct >= 100;
 
               return (
                 <div
-                  key={goal._id}
-                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-3 text-xs flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                  key={g._id}
+                  className="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex flex-col justify-between space-y-4 hover:border-[var(--color-primary)] transition"
                 >
-                  <div className="flex-1 flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-800 dark:text-slate-100">
-                        {goal.name}
-                      </span>
+                  <div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                          {g.name}
+                        </h4>
+                        {g.deadline && (
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Target Date: {formatDate(g.deadline)}
+                          </p>
+                        )}
+                      </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                           isCompleted
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                            : "bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/30"
                         }`}
                       >
-                        {isCompleted ? "Completed" : "Active"}
+                        {isCompleted ? "Achieved" : `${pct}%`}
                       </span>
                     </div>
-                    {goal.note && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {goal.note}
-                      </p>
-                    )}
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {formatCurrency(current)} / {formatCurrency(target)} ·{" "}
-                      <span className="font-semibold">{percent}%</span> completed
-                      {goal.deadline && (
-                        <>
-                          {" · "}
-                          Target by {formatDate(goal.deadline)}
-                        </>
-                      )}
-                    </p>
 
-                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden mt-1">
-                      <div
-                        className={`h-full ${
-                          isCompleted ? "bg-emerald-500" : "bg-indigo-500"
-                        }`}
-                        style={{ width: `${percent}%` }}
-                      />
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-500">Saved:</span>
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {formatCurrency(current)} / {formatCurrency(target)}
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-slate-200 dark:bg-[var(--color-surface-elevated)] rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isCompleted ? "bg-emerald-500" : "bg-[var(--color-primary)]"
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-2 sm:mt-0 flex items-center gap-2 justify-end">
-                    {!isCompleted && (
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        className="text-[11px]"
-                        onClick={() => openContribModal(goal)}
-                      >
-                        Add progress
-                      </Button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteGoal(goal._id)}
-                      className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300"
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => openContribModal(g)}
+                      disabled={isCompleted}
                     >
-                      <FiTrash2 className="text-[10px]" />
-                      Delete
+                      <FiTrendingUp className="text-xs" />
+                      <span>Add Funds</span>
+                    </Button>
+
+                    <button
+                      onClick={() => handleDeleteGoal(g._id)}
+                      disabled={deleting}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                      title="Delete goal"
+                    >
+                      <FiTrash2 className="text-sm" />
                     </button>
                   </div>
                 </div>
@@ -326,118 +250,122 @@ function Goals() {
         )}
       </Card>
 
-      {/* Add Goal modal */}
+      {/* Add Goal Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md mx-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-4 sm:p-5">
-            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-50 mb-3">
-              Add goal
-            </h2>
-            <form onSubmit={handleCreateGoal} className="space-y-3 text-sm">
-              <TextInput
-                label="Goal name"
-                name="name"
-                value={form.name}
-                onChange={handleFormChange}
-                placeholder="e.g. New Phone, Emergency Fund"
-              />
-              <TextInput
-                label="Target amount (₹)"
-                name="targetAmount"
-                type="number"
-                min="0"
-                value={form.targetAmount}
-                onChange={handleFormChange}
-                placeholder="e.g. 50000"
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+            <h3 className="text-base font-bold text-[var(--color-text-main)] mb-4 pb-2 border-b border-[var(--color-border)]">
+              New Savings Goal
+            </h3>
+
+            <form onSubmit={handleCreateGoal} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Deadline (optional)
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wider">
+                  Goal Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleFormChange}
+                  placeholder="e.g. Vacation Fund, Car Down Payment"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wider">
+                  Target Amount (INR)
+                </label>
+                <input
+                  type="number"
+                  name="targetAmount"
+                  value={form.targetAmount}
+                  onChange={handleFormChange}
+                  placeholder="50000"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wider">
+                  Target Deadline
                 </label>
                 <input
                   type="date"
                   name="deadline"
                   value={form.deadline}
                   onChange={handleFormChange}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Note (optional)
-                </label>
-                <textarea
-                  name="note"
-                  rows={2}
-                  value={form.note}
-                  onChange={handleFormChange}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  placeholder="e.g. Save for iPhone, target before Diwali..."
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
-                <button
+              <div className="flex justify-end gap-2 pt-3">
+                <Button
                   type="button"
-                  onClick={() => !addLoading && setShowAddModal(false)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-                  disabled={addLoading}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddModal(false)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={addLoading}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-wait text-white text-xs sm:text-sm font-medium"
+                  variant="gradient"
+                  size="sm"
+                  loading={creating}
                 >
-                  {addLoading ? "Saving..." : "Save goal"}
-                </button>
+                  Save Goal
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Contribution modal */}
+      {/* Contribute Funds Modal */}
       {contribGoal && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-sm mx-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-4 sm:p-5">
-            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-50 mb-2">
-              Add progress
-            </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-              Goal:{" "}
-              <span className="font-semibold text-slate-800 dark:text-slate-100">
-                {contribGoal.name}
-              </span>{" "}
-              · Current: {formatCurrency(contribGoal.currentAmount)} /{" "}
-              {formatCurrency(contribGoal.targetAmount)}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+            <h3 className="text-base font-bold text-[var(--color-text-main)] mb-2">
+              Contribute to {contribGoal.name}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              Add savings to this goal to boost your completion progress.
             </p>
-            <form onSubmit={handleContribute} className="space-y-3 text-sm">
-              <TextInput
-                label="Amount to add (₹)"
-                type="number"
-                min="0"
-                value={contribAmount}
-                onChange={(e) => setContribAmount(e.target.value)}
-              />
 
-              <div className="flex justify-end gap-2 pt-1">
-                <button
+            <form onSubmit={handleContribute} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wider">
+                  Deposit Amount (INR)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={contribAmount}
+                  onChange={(e) => setContribAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
                   type="button"
-                  onClick={() => !contribLoading && setContribGoal(null)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-                  disabled={contribLoading}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setContribGoal(null)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={contribLoading}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-wait text-white text-xs sm:text-sm font-medium"
+                  variant="gradient"
+                  size="sm"
+                  loading={contributing}
                 >
-                  {contribLoading ? "Updating..." : "Add"}
-                </button>
+                  Add Funds
+                </Button>
               </div>
             </form>
           </div>

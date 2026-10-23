@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { applyThemeVariables } from "./constants/theme";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -23,7 +24,7 @@ import Goals from "./pages/Goals";
 function ProtectedRoute({ children }) {
   const auth = useSelector((state) => state.auth);
   if (!auth?.user || !auth?.token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
@@ -33,28 +34,32 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    if (theme === "dark") document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
+    const isDark = theme === "dark";
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    applyThemeVariables(isDark);
   }, [theme]);
 
-  //  Navbar sirf public routes me
+  // Navbar only on public routes
   const publicPaths = ["/", "/login", "/signup"];
   const showNavbar = publicPaths.includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-text-main)] transition-colors">
       {/* Public pages navbar */}
       {showNavbar && <Navbar />}
- 
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Private App Layout (Sidebar + Protected pages) */}
+        {/* Private App Layout (Sidebar + Protected pages) using pathless layout route */}
         <Route
-          path="/"
           element={
             <ProtectedRoute>
               <AppLayout />
@@ -73,7 +78,7 @@ function App() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

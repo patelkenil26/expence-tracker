@@ -39,7 +39,7 @@ function Settings() {
   };
 
   // ===========================
-  // ▶ UPDATE PROFILE
+  // UPDATE PROFILE
   // ===========================
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +66,7 @@ function Settings() {
   };
 
   // ===========================
-  // ▶ CHANGE PASSWORD
+  // CHANGE PASSWORD
   // ===========================
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -109,14 +109,14 @@ function Settings() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Profile card */}
         <Card className="p-4 sm:p-5">
-          <h2 className="text-sm font-semibold mb-2 dark:text-slate-300">
+          <h2 className="text-sm font-semibold mb-2 text-slate-900 dark:text-slate-100">
             Profile
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
             Update your name and email address.
           </p>
 
-          <form onSubmit={handleProfileSubmit} className="space-y-3 dark:text-slate-300">
+          <form onSubmit={handleProfileSubmit} className="space-y-3">
             <TextInput
               label="Name"
               name="name"
@@ -140,14 +140,14 @@ function Settings() {
 
         {/* Password card */}
         <Card className="p-4 sm:p-5">
-          <h2 className="text-sm font-semibold mb-2 dark:text-slate-300">
+          <h2 className="text-sm font-semibold mb-2 text-slate-900 dark:text-slate-100">
             Change password
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
             Use a strong password to keep your account secure.
           </p>
 
-          <form onSubmit={handlePasswordSubmit} className="space-y-3 dark:text-slate-300">
+          <form onSubmit={handlePasswordSubmit} className="space-y-3">
             <TextInput
               label="Current password"
               type="password"

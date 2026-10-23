@@ -1,17 +1,19 @@
-// src/api/baseURL.js
 import axios from "axios";
+import { API_BASE_URL } from "../config/env.config";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL &&
-    import.meta.env.VITE_API_BASE_URL.trim()) ||
-  "http://localhost:8000/api";
-
+/**
+ * Global Axios Client Instance
+ * Configured with request authentication interceptors and global 401 session expiry handlers.
+ */
 const baseURL = axios.create({
-  baseURL: API_BASE_URL, // ✅ yaha "baseURL" key important hai
+  baseURL: API_BASE_URL,
   withCredentials: false,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Har request me token add karna
+// Request Interceptor: Injects active JWT Bearer token into Authorization header
 baseURL.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
@@ -23,6 +25,24 @@ baseURL.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Gracefully handles 401 session expiry & cleans up storage
+baseURL.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        if (path !== "/login" && path !== "/signup" && path !== "/") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default baseURL;

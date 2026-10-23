@@ -1,13 +1,11 @@
 // src/pages/Analytics.jsx
-import React, { useEffect, useState, useCallback } from "react";
-import { useSelector } from "react-redux";
+import React, { useState } from "react";
 import { FiBarChart2 } from "react-icons/fi";
-import toast from "react-hot-toast";
 
 import PageHeader from "../components/ui/PageHeader";
 import Card from "../components/ui/Card";
 import { formatCurrency } from "../utils/format";
-import { getMonthlyStatsApi, getByCategoryStatsApi } from "../api/statsApi";
+import { useAnalyticsData } from "../hooks/useAnalyticsData";
 
 import {
   ResponsiveContainer,
@@ -19,234 +17,156 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+function CustomAnalyticsTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-2.5 shadow-lg backdrop-blur-md text-xs space-y-1">
+        <p className="font-semibold text-slate-500 dark:text-slate-400">Month: {label}</p>
+        {payload.map((item) => (
+          <p
+            key={item.dataKey}
+            className={`font-bold ${
+              item.dataKey === "income"
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-rose-600 dark:text-rose-400"
+            }`}
+          >
+            {item.name}: {formatCurrency(item.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
 
 function Analytics() {
-  const { user } = useSelector((state) => state.auth);
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
-  const [monthlyData, setMonthlyData] = useState([]);
-  const [monthlyLoading, setMonthlyLoading] = useState(false);
-  const [yearIncomeTotal, setYearIncomeTotal] = useState(0);
-  const [yearExpenseTotal, setYearExpenseTotal] = useState(0);
+  // TanStack Query custom hook for analytics data
+  const {
+    monthlyData,
+    yearIncomeTotal,
+    yearExpenseTotal,
+    monthlyLoading,
+    topCategories,
+    categoriesLoading,
+  } = useAnalyticsData(selectedYear);
 
-  const [topCategories, setTopCategories] = useState([]);
-  const [topCatLoading, setTopCatLoading] = useState(false);
-
-  // ============================
-  // Monthly comparison (income vs expense)
-  // ============================
-  const fetchMonthly = useCallback(async () => {
-    try {
-      setMonthlyLoading(true);
-      const res = await getMonthlyStatsApi({ year: selectedYear });
-
-      const apiData = Array.isArray(res.data?.data) ? res.data.data : [];
-
-      // 12 months ka fixed array banate hain – missing months = 0
-      const mapped = MONTH_NAMES.map((label, idx) => {
-        const monthNumber = idx + 1;
-        const found = apiData.find((m) => m.month === monthNumber) || {};
-        return {
-          name: label,
-          income: found.totalIncome || 0,
-          expense: found.totalExpense || 0,
-        };
-      });
-
-      setMonthlyData(mapped);
-      setYearIncomeTotal(res.data?.totalIncome || 0);
-      setYearExpenseTotal(res.data?.totalExpense || 0);
-    } catch (err) {
-      console.error("Monthly analytics error:", err);
-      toast.error("Failed to load monthly comparison.");
-    } finally {
-      setMonthlyLoading(false);
-    }
-  }, [selectedYear]);
-
-  // ============================
-  // Top expense categories (this month)
-  // ============================
-  const fetchTopCategories = useCallback(async () => {
-    try {
-      setTopCatLoading(true);
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const year = selectedYear;
-
-      const res = await getByCategoryStatsApi({
-        month,
-        year,
-        type: "expense",
-      });
-
-      const arr = Array.isArray(res.data?.data) ? res.data.data : [];
-
-      const sorted = [...arr].sort(
-        (a, b) => (b.totalAmount || 0) - (a.totalAmount || 0)
-      );
-
-      setTopCategories(sorted);
-    } catch (err) {
-      console.error("Top categories error:", err);
-      toast.error("Failed to load top expense categories.");
-    } finally {
-      setTopCatLoading(false);
-    }
-  }, [selectedYear]);
-
-  useEffect(() => {
-    fetchMonthly();
-    fetchTopCategories();
-  }, [fetchMonthly, fetchTopCategories]);
-
-  const hasMonthlyData = monthlyData.some(
-    (m) => m.income > 0 || m.expense > 0
-  );
-
+  const hasMonthlyData = monthlyData.some((m) => m.income > 0 || m.expense > 0);
   const totalTopExpense =
     topCategories.reduce((sum, c) => sum + (c.totalAmount || 0), 0) || 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-7xl mx-auto pb-8">
       <PageHeader
-        title="Analytics"
-        subtitle="Deep dive into your income and expenses over time."
+        title="Financial Analytics"
+        subtitle="Annual performance comparison, month-over-month trends, and category distribution."
         icon={<FiBarChart2 />}
         actions={
-          <select
-            className="text-xs sm:text-sm border dark:text-slate-300 border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 bg-white dark:bg-slate-900"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {Array.from({ length: 5 }).map((_, idx) => {
-              const y = new Date().getFullYear() - idx;
-              return (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              );
-            })}
-          </select>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">Year:</span>
+            <select
+              className="text-xs sm:text-sm border border-[var(--color-border)] rounded-xl px-3 py-1.5 bg-[var(--color-surface)] text-[var(--color-text-main)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {Array.from({ length: 5 }).map((_, idx) => {
+                const y = new Date().getFullYear() - idx;
+                return (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         }
       />
 
-      {/* MONTHLY COMPARISON CARD */}
-      <Card className="p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Monthly comparison – {selectedYear}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Compare your total income vs expenses month by month.
+      {/* Monthly Comparison Card */}
+      <Card
+        title={`Monthly Comparison — ${selectedYear}`}
+        subtitle="Compare total income inflow vs expense outflow month by month"
+        action={
+          <div className="text-right text-xs space-y-0.5">
+            <p className="text-emerald-600 dark:text-emerald-400 font-bold">
+              Total Inflow: {formatCurrency(yearIncomeTotal)}
+            </p>
+            <p className="text-rose-600 dark:text-rose-400 font-bold">
+              Total Outflow: {formatCurrency(yearExpenseTotal)}
             </p>
           </div>
-          <div className="text-right text-[11px] space-y-0.5">
-            <p className="text-emerald-600 dark:text-emerald-400">
-              Total income: {formatCurrency(yearIncomeTotal)}
-            </p>
-            <p className="text-rose-600 dark:text-rose-400">
-              Total expense: {formatCurrency(yearExpenseTotal)}
-            </p>
-          </div>
-        </div>
-
-        <div className="h-64">
+        }
+      >
+        <div className="h-72 w-full pt-2">
           {monthlyLoading ? (
-            <div className="h-full flex items-center justify-center text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="h-full flex items-center justify-center text-xs text-slate-400 animate-pulse">
               Loading monthly stats...
             </div>
           ) : !hasMonthlyData ? (
-            <div className="h-full flex items-center justify-center text-[11px] text-slate-500 dark:text-slate-400">
-              No monthly stats available yet.
+            <div className="h-full flex items-center justify-center text-xs text-slate-400">
+              No monthly activity recorded for {selectedYear}.
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" fontSize={10} />
-                <YAxis fontSize={10} />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value)}
-                  contentStyle={{ fontSize: "12px" }}
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-slate-100 dark:stroke-slate-800"
+                  vertical={false}
                 />
-                <Bar
-                  dataKey="income"
-                  name="Income"
-                  radius={[4, 4, 0, 0]}
-                  fill="#22c55e"
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(val) => (val >= 1000 ? `₹${val / 1000}k` : `₹${val}`)}
                 />
-                <Bar
-                  dataKey="expense"
-                  name="Expense"
-                  radius={[4, 4, 0, 0]}
-                  fill="#ef4444"
-                />
+                <Tooltip content={<CustomAnalyticsTooltip />} />
+                <Bar dataKey="income" name="Income" radius={[4, 4, 0, 0]} fill="#10b981" maxBarSize={24} />
+                <Bar dataKey="expense" name="Expense" radius={[4, 4, 0, 0]} fill="#f43f5e" maxBarSize={24} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
       </Card>
 
-      {/* TOP EXPENSE CATEGORIES CARD */}
-      <Card className="p-4 sm:p-5">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            Top expense categories (this month)
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            See where most of your money is going in {selectedYear}.
-          </p>
-        </div>
-
-        {topCatLoading ? (
-          <div className="py-6 text-center text-[11px] text-slate-500 dark:text-slate-400">
+      {/* Top Expense Categories Card */}
+      <Card
+        title="Top Outflow Categories"
+        subtitle={`Leading expense destinations in ${selectedYear}`}
+      >
+        {categoriesLoading ? (
+          <div className="py-6 text-center text-xs text-slate-400 animate-pulse">
             Loading category stats...
           </div>
         ) : topCategories.length === 0 ? (
-          <div className="py-6 text-center text-[11px] text-slate-500 dark:text-slate-400">
-            No expense data for this month.
+          <div className="py-8 text-center text-xs text-slate-400">
+            No expense data available for this month.
           </div>
         ) : (
-          <div className="space-y-3 text-xs">
+          <div className="space-y-4">
             {topCategories.map((cat) => {
               const amount = cat.totalAmount || 0;
-              const pct =
-                totalTopExpense > 0
-                  ? Math.round((amount / totalTopExpense) * 100)
-                  : 0;
+              const pct = totalTopExpense > 0 ? Math.round((amount / totalTopExpense) * 100) : 0;
 
               return (
-                <div key={cat.category} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-700 dark:text-slate-200">
+                <div key={cat.category} className="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-slate-800 dark:text-slate-200">
                       {cat.category}
                     </span>
                     <span className="text-slate-600 dark:text-slate-300">
                       {formatCurrency(amount)}{" "}
-                      <span className="text-[10px] text-slate-400">
-                        ({pct}% of top)
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        ({pct}% of leading outflow)
                       </span>
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-900 overflow-hidden">
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-[var(--color-surface-elevated)] overflow-hidden">
                     <div
-                      className="h-full bg-indigo-500 rounded-full"
+                      className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

@@ -3,9 +3,13 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
+  return jwt.sign(
+    { userId },
+    process.env.JWT_SECRET || "expence_tracker_jwt_secret_dev_key",
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    }
+  );
 };
 
 exports.signup = async (req, res) => {

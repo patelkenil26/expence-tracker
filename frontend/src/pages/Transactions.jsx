@@ -1,19 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+// src/pages/Transactions.jsx
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import toast from "react-hot-toast";
 import { FiList } from "react-icons/fi";
 
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import TransactionFilters from "../components/filters/TransactionFilters";
 import TransactionTable from "../components/transactions/TransactionTable";
-import { getTransactionsApi, deleteTransactionApi } from "../api/transactionApi";
 import { selectMergedCategoryNames } from "../store/categorySlice";
+import { useTransactionsData } from "../hooks/useTransactionsData";
 
 function Transactions() {
   const categories = useSelector(selectMergedCategoryNames);
-  const [rawList, setRawList] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -23,6 +21,9 @@ function Transactions() {
     endDate: "",
     sort: "desc", // desc = newest first
   });
+
+  // TanStack Query custom hook for fetching and deleting
+  const { transactions: rawList, loading, deleteTransaction } = useTransactionsData(filters);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -42,45 +43,10 @@ function Transactions() {
     });
   };
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-
-      const query = {
-        limit: 500,
-      };
-
-      if (filters.type) query.type = filters.type;
-      if (filters.category) query.category = filters.category;
-      if (filters.startDate) query.startDate = filters.startDate;
-      if (filters.endDate) query.endDate = filters.endDate;
-
-      // sort only by date for backend
-      if (filters.sort === "asc" || filters.sort === "desc") {
-        query.sort = filters.sort;
-      }
-
-      const res = await getTransactionsApi(query);
-      const list = Array.isArray(res.data?.data) ? res.data.data : [];
-      setRawList(list);
-    } catch (err) {
-      console.error("Fetch transactions error:", err);
-      toast.error("Failed to load transactions.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTransactions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.type, filters.category, filters.startDate, filters.endDate, filters.sort === "asc" || filters.sort === "desc" ? filters.sort : "desc"]);
-  // note: search filter only client-side, isliye dependency me nahi rakha
-
   const filteredList = useMemo(() => {
     let list = [...rawList];
 
-    // client-side search
+    // Client-side search for note or category
     if (filters.search) {
       const q = filters.search.toLowerCase();
       list = list.filter((tx) => {
@@ -90,19 +56,15 @@ function Transactions() {
       });
     }
 
-    // sort by amount client-side (high/low)
+    // Client-side amount sort
     if (filters.sort === "high") {
       list.sort((a, b) => (b.amount || 0) - (a.amount || 0));
     } else if (filters.sort === "low") {
       list.sort((a, b) => (a.amount || 0) - (b.amount || 0));
     } else if (filters.sort === "asc") {
-      list.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
+      list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     } else if (filters.sort === "desc") {
-      list.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+      list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
     return list;
@@ -111,24 +73,21 @@ function Transactions() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this transaction?")) return;
     try {
-      await deleteTransactionApi(id);
-      toast.success("Transaction deleted.");
-      setRawList((prev) => prev.filter((tx) => tx._id !== id));
-    } catch (err) {
-      console.error("Delete transaction error:", err);
-      toast.error("Failed to delete transaction.");
+      await deleteTransaction(id);
+    } catch {
+      // Handled in TanStack mutation
     }
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 max-w-7xl mx-auto pb-8">
       <PageHeader
         title="All Transactions"
-        subtitle="Search and filter through all your income and expenses."
+        subtitle="Search, filter, and inspect your unified income and expense ledger."
         icon={<FiList />}
       />
 
-      <Card className="p-4 sm:p-5">
+      <Card>
         <TransactionFilters
           filters={filters}
           categories={categories}

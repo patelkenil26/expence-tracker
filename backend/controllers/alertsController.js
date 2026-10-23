@@ -21,7 +21,6 @@ exports.getAlerts = async (req, res) => {
       userId: userObjectId,
       month,
       year,
-      type: "expense",
     });
 
     // is month ke expenses ka aggregation
@@ -109,14 +108,16 @@ exports.getAlerts = async (req, res) => {
         daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       }
 
+      const goalTitle = g.name || g.title || "Goal";
+
       // completed goal
       if (progress >= 1 && g.status !== "completed") {
         goalAlerts.push({
           id: g._id,
           source: "goal",
           level: "success",
-          title: g.title,
-          message: `Congrats! You have reached your goal "${g.title}".`,
+          title: goalTitle,
+          message: `Congrats! You have reached your goal "${goalTitle}".`,
           targetAmount: target,
           currentAmount: current,
           progress,
@@ -131,8 +132,8 @@ exports.getAlerts = async (req, res) => {
           id: g._id,
           source: "goal",
           level: "warning",
-          title: g.title,
-          message: `Only ${daysLeft} day(s) left for goal "${g.title}". You are at ${Math.round(
+          title: goalTitle,
+          message: `Only ${daysLeft} day(s) left for goal "${goalTitle}". You are at ${Math.round(
             progress * 100
           )}% of target.`,
           targetAmount: target,
@@ -149,10 +150,10 @@ exports.getAlerts = async (req, res) => {
           id: g._id,
           source: "goal",
           level: "info",
-          title: g.title,
+          title: goalTitle,
           message: `You have completed ${Math.round(
             progress * 100
-          )}% of goal "${g.title}". Keep going!`,
+          )}% of goal "${goalTitle}". Keep going!`,
           targetAmount: target,
           currentAmount: current,
           progress,
