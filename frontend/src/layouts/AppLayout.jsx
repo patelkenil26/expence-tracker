@@ -151,38 +151,45 @@ function AppLayout() {
       {/* ==================================================================== */}
       <div className="flex-1 ml-0 md:ml-64 flex flex-col h-full overflow-hidden">
         {/* Top Header Bar for Desktop & Mobile */}
-        <header className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5 bg-[var(--color-surface)]/90 backdrop-blur-md border-b border-[var(--color-border)] z-20 shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between px-3.5 sm:px-6 lg:px-8 py-3 sm:py-3.5 bg-[var(--color-surface)]/90 backdrop-blur-md border-b border-[var(--color-border)] z-20 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Mobile menu hamburger toggle */}
             <button
-              className="md:hidden p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)]"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-label="Toggle menu"
+              className="md:hidden p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] active:scale-95 transition"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
             >
-              {mobileMenuOpen ? <FiX className="text-lg" /> : <FiMenu className="text-lg" />}
+              <FiMenu className="text-lg" />
             </button>
 
+            {/* Mobile Brand indicator (shown only on small mobile) */}
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="h-7 w-7 rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-text)] flex items-center justify-center font-black text-xs">
+                ₹
+              </div>
+            </div>
+
             {/* Breadcrumb path */}
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs truncate">
               <span className="font-semibold text-[var(--color-text-muted)] hidden sm:inline">
                 ExpenseTracker
               </span>
               <span className="text-[var(--color-border)] hidden sm:inline">/</span>
-              <span className="font-bold text-[var(--color-text-main)] text-sm">
+              <span className="font-bold text-[var(--color-text-main)] text-sm truncate">
                 {currentTitle}
               </span>
             </div>
           </div>
 
           {/* Right Header Status & Quick Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Badge variant="primary" size="xs" dot className="hidden sm:inline-flex">
               Cloud Synced
             </Badge>
 
             <button
               onClick={handleThemeToggle}
-              className="p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] hover:bg-[var(--color-surface-elevated)] transition"
+              className="p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] hover:bg-[var(--color-surface-elevated)] active:scale-95 transition"
               aria-label="Toggle theme"
             >
               {theme === "light" ? <FiMoon className="text-sm" /> : <FiSun className="text-sm text-[var(--color-primary)]" />}
@@ -194,46 +201,125 @@ function AppLayout() {
           </div>
         </header>
 
-        {/* Mobile Navigation Drawer Overlay */}
+        {/* Mobile Navigation Slide-Over Drawer (Full Screen Overlay) */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 flex flex-col top-[57px]">
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10 animate-fade-in"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
               onClick={closeMobileMenu}
             />
-            <nav className="bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-4 space-y-1.5 max-h-[calc(100vh-65px)] overflow-y-auto shadow-2xl">
-              {navLinks.map((item) => (
-                <SidebarLink
-                  key={item.to}
-                  to={item.to}
-                  icon={item.icon}
-                  onClick={closeMobileMenu}
-                >
-                  {item.label}
-                </SidebarLink>
-              ))}
 
-              <div className="pt-3 mt-3 border-t border-[var(--color-border-subtle)]">
+            {/* Slide-in panel */}
+            <div className="relative w-4/5 max-w-xs h-full bg-[var(--color-surface)] border-r border-[var(--color-border)] p-4 flex flex-col z-10 shadow-2xl overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--color-border-subtle)]">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--color-primary-text)] flex items-center justify-center font-black text-sm">
+                    ₹
+                  </div>
+                  <span className="text-sm font-black tracking-tight text-[var(--color-text-main)]">
+                    Expense<span className="text-[var(--color-primary)]">Tracker</span>
+                  </span>
+                </div>
+                <button
+                  onClick={closeMobileMenu}
+                  className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+                  aria-label="Close menu"
+                >
+                  <FiX className="text-base" />
+                </button>
+              </div>
+
+              {/* Navigation list in drawer */}
+              <nav className="flex-1 space-y-1 overflow-y-auto py-2">
+                {navLinks.map((item) => (
+                  <SidebarLink
+                    key={item.to}
+                    to={item.to}
+                    icon={item.icon}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.label}
+                  </SidebarLink>
+                ))}
+              </nav>
+
+              {/* User profile & actions in drawer */}
+              <div className="pt-3 border-t border-[var(--color-border-subtle)] space-y-2.5">
+                <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]">
+                  <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-text)] flex items-center justify-center font-bold text-xs shrink-0">
+                    {userInitial}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[var(--color-text-main)] truncate">
+                      {displayName}
+                    </p>
+                    <p className="text-[10px] text-[var(--color-text-muted)] truncate">
+                      {userEmail}
+                    </p>
+                  </div>
+                </div>
+
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full justify-center text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50"
                   onClick={handleLogout}
                 >
-                  <FiLogOut className="mr-1" />
-                  Logout
+                  <FiLogOut className="mr-1.5" />
+                  <span>Logout</span>
                 </Button>
               </div>
-            </nav>
+            </div>
           </div>
         )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Main Content Area (With bottom padding on mobile for bottom bar) */}
+        <main className="flex-1 overflow-y-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8">
           <Outlet />
         </main>
+
+        {/* ==================================================================== */}
+        {/* MOBILE BOTTOM NAVIGATION BAR (Sticky 1-tap thumb navigation)          */}
+        {/* ==================================================================== */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-surface)]/95 backdrop-blur-lg border-t border-[var(--color-border)] px-2 py-1.5 flex items-center justify-around shadow-lg safe-bottom">
+          <BottomNavLink to="/dashboard" icon={<FiGrid />} label="Home" />
+          <BottomNavLink to="/transactions" icon={<FiList />} label="History" />
+          <BottomNavLink to="/income" icon={<FiTrendingUp />} label="Income" />
+          <BottomNavLink to="/expense" icon={<FiTrendingDown />} label="Expense" />
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="flex flex-col items-center justify-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-primary)] active:scale-95 transition"
+          >
+            <FiMenu className="text-base" />
+            <span>More</span>
+          </button>
+        </nav>
       </div>
     </div>
+  );
+}
+
+function BottomNavLink({ to, icon, label }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        "flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold transition-all " +
+        (isActive
+          ? "text-[var(--color-primary)] font-black"
+          : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]")
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className={`text-base p-1 rounded-lg ${isActive ? "bg-[var(--color-primary)]/15" : ""}`}>
+            {icon}
+          </span>
+          <span className="truncate">{label}</span>
+        </>
+      )}
+    </NavLink>
   );
 }
 

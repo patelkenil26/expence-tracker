@@ -175,35 +175,22 @@ function Categories() {
             No transactions logged this month yet.
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                  <th className="py-3 pr-3 font-semibold">Category</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Inflow</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Outflow</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Net</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {finalCategoryUsage.map((cat, i) => {
-                  const net = (cat.totalIncome || 0) - (cat.totalExpense || 0);
-                  return (
-                    <tr
-                      key={cat._id || cat.name || i}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                    >
-                      <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">
+          <>
+            {/* Mobile Card View (< 640px) */}
+            <div className="block sm:hidden space-y-2.5">
+              {finalCategoryUsage.map((cat, i) => {
+                const net = (cat.totalIncome || 0) - (cat.totalExpense || 0);
+                return (
+                  <div
+                    key={cat._id || cat.name || i}
+                    className="p-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-[var(--color-text-main)]">
                         {cat.name}
-                      </td>
-                      <td className="py-3 pr-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {cat.totalIncome > 0 ? `+${formatCurrency(cat.totalIncome)}` : "—"}
-                      </td>
-                      <td className="py-3 pr-3 text-right font-bold text-rose-600 dark:text-rose-400">
-                        {cat.totalExpense > 0 ? `-${formatCurrency(cat.totalExpense)}` : "—"}
-                      </td>
-                      <td
-                        className={`py-3 pr-3 text-right font-extrabold ${
+                      </span>
+                      <span
+                        className={`text-xs font-black ${
                           net > 0
                             ? "text-emerald-600 dark:text-emerald-400"
                             : net < 0
@@ -211,21 +198,82 @@ function Categories() {
                             : "text-slate-400"
                         }`}
                       >
-                        {formatCurrency(net)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        Net: {formatCurrency(net)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1.5 border-t border-[var(--color-border-subtle)]">
+                      <div>
+                        <span className="text-[10px] text-[var(--color-text-muted)] block">Inflow</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {cat.totalIncome > 0 ? `+${formatCurrency(cat.totalIncome)}` : "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--color-text-muted)] block">Outflow</span>
+                        <span className="font-bold text-rose-600 dark:text-rose-400">
+                          {cat.totalExpense > 0 ? `-${formatCurrency(cat.totalExpense)}` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (>= 640px) */}
+            <div className="hidden sm:block w-full overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                    <th className="py-3 pr-3 font-semibold">Category</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Inflow</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Outflow</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Net</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  {finalCategoryUsage.map((cat, i) => {
+                    const net = (cat.totalIncome || 0) - (cat.totalExpense || 0);
+                    return (
+                      <tr
+                        key={cat._id || cat.name || i}
+                        className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">
+                          {cat.name}
+                        </td>
+                        <td className="py-3 pr-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                          {cat.totalIncome > 0 ? `+${formatCurrency(cat.totalIncome)}` : "—"}
+                        </td>
+                        <td className="py-3 pr-3 text-right font-bold text-rose-600 dark:text-rose-400">
+                          {cat.totalExpense > 0 ? `-${formatCurrency(cat.totalExpense)}` : "—"}
+                        </td>
+                        <td
+                          className={`py-3 pr-3 text-right font-extrabold ${
+                            net > 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : net < 0
+                              ? "text-rose-600 dark:text-rose-400"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {formatCurrency(net)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100 max-h-[92vh] overflow-y-auto">
             <h3 className="text-base font-bold text-[var(--color-text-main)] mb-4 pb-2 border-b border-[var(--color-border)]">
               {editCategory ? "Edit Category" : "New Category"}
             </h3>
@@ -244,7 +292,8 @@ function Categories() {
       {/* Delete Modal */}
       {deleteTarget && (
         <DeleteConfirm
-          item={deleteTarget}
+          title="Delete Category"
+          message={`Are you sure you want to delete "${deleteTarget?.name}"? Transactions associated with this category will remain, but the category tag will be removed.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />

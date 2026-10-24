@@ -119,36 +119,36 @@ function Goals() {
 
       {/* KPI Cards Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
-          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-[var(--color-text-muted)]">
             Total Target
           </p>
-          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">
+          <p className="text-xl sm:text-2xl font-black text-[var(--color-text-main)]">
             {formatCurrency(totalTarget)}
           </p>
-          <p className="text-[11px] text-slate-400">Target across all active goals</p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">Target across all active goals</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
-          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-[var(--color-text-muted)]">
             Current Savings
           </p>
-          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+          <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
             {formatCurrency(totalCurrent)}
           </p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--color-text-muted)]">
             {totalTarget > 0 ? `${Math.round((totalCurrent / totalTarget) * 100)}% achieved` : "0% achieved"}
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-1">
-          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm space-y-1">
+          <p className="text-xs font-semibold uppercase text-[var(--color-text-muted)]">
             Milestones Completed
           </p>
-          <p className="text-2xl font-black text-[var(--color-primary)]">
+          <p className="text-xl sm:text-2xl font-black text-[var(--color-primary)]">
             {completedCount} / {goals.length}
           </p>
-          <p className="text-[11px] text-slate-400">Goals reached 100% target</p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">Goals reached 100% target</p>
         </div>
       </div>
 
@@ -253,7 +253,7 @@ function Goals() {
       {/* Add Goal Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+          <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100 max-h-[92vh] overflow-y-auto">
             <h3 className="text-base font-bold text-[var(--color-text-main)] mb-4 pb-2 border-b border-[var(--color-border)]">
               New Savings Goal
             </h3>
@@ -326,7 +326,7 @@ function Goals() {
       {/* Contribute Funds Modal */}
       {contribGoal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100">
+          <div className="w-full max-w-sm bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-6 transition-all transform scale-100 max-h-[92vh] overflow-y-auto">
             <h3 className="text-base font-bold text-[var(--color-text-main)] mb-2">
               Contribute to {contribGoal.name}
             </h3>

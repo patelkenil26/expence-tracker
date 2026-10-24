@@ -120,13 +120,13 @@ function Dashboard() {
       {/* Add Transaction Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 transition-all transform scale-100">
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-full max-w-lg bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-5 sm:p-6 transition-all transform scale-100 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-[var(--color-border-subtle)]">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)]">
                   New Transaction
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   Record an income or expense with category and notes
                 </p>
               </div>

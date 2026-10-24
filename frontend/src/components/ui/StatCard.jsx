@@ -18,16 +18,16 @@ function StatCard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${config.glow} ${className}`}
+      className={`group relative overflow-hidden rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 sm:p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${config.glow} ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
             {label}
           </p>
-          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[var(--color-text-main)] tracking-tight">
             {loading ? (
-              <span className="inline-block h-8 w-28 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+              <span className="inline-block h-8 w-28 bg-[var(--color-surface-elevated)] rounded-lg animate-pulse" />
             ) : (
               value
             )}
@@ -36,7 +36,7 @@ function StatCard({
 
         {icon && (
           <div
-            className={`h-11 w-11 rounded-2xl flex items-center justify-center text-lg shadow-sm shrink-0 transition-transform duration-200 group-hover:scale-110 ${config.iconBg}`}
+            className={`h-10 w-10 sm:h-11 sm:w-11 rounded-2xl flex items-center justify-center text-lg shadow-sm shrink-0 transition-transform duration-200 group-hover:scale-110 ${config.iconBg}`}
           >
             {icon}
           </div>
@@ -44,7 +44,7 @@ function StatCard({
       </div>
 
       {(description || trend) && (
-        <div className="mt-3.5 flex items-center gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+        <div className="mt-3 sm:mt-3.5 flex items-center gap-2 pt-2 sm:pt-2.5 border-t border-[var(--color-border-subtle)] text-xs">
           {trend && (
             <span
               className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md text-[11px] ${
@@ -65,7 +65,7 @@ function StatCard({
           )}
 
           {description && (
-            <span className="text-slate-500 dark:text-slate-400 truncate">
+            <span className="text-[var(--color-text-muted)] truncate">
               {description}
             </span>
           )}

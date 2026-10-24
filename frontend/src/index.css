@@ -44,21 +44,21 @@
 html.dark {
   color-scheme: dark;
 
-  /* Global Surfaces & Canvas (Dark Mode) */
-  --color-bg-base: #10276b;          /* Blue skin midnight canvas */
-  --color-surface: #16317b;          /* Deep blue card surface */
-  --color-surface-elevated: #1e3e94; /* Elevated container / modal */
-  --color-surface-subtle: #132a70;
+  /* Global Surfaces & Canvas (Dark Mode - Refined Midnight Obsidian & Cornflower) */
+  --color-bg-base: #0c101a;          /* Deep midnight canvas, easy on the eyes */
+  --color-surface: #141a28;          /* Refined dark card surface */
+  --color-surface-elevated: #1b2336; /* Elevated container / modal / dropdown */
+  --color-surface-subtle: #161e30;
 
   /* Global Borders */
-  --color-border: #284fa8;           /* Periwinkle-navy border */
-  --color-border-subtle: rgba(192, 207, 255, 0.2);
+  --color-border: #222d42;           /* Subtle periwinkle-tinted border */
+  --color-border-subtle: rgba(192, 207, 255, 0.1);
   --color-border-focus: #588dd2;
 
   /* Global Typography */
   --color-text-main: #f4f1ee;        /* Pearl crisp warm white */
   --color-text-secondary: #c0cfff;   /* Periwinkle */
-  --color-text-muted: #c0cfff;
+  --color-text-muted: #7d8ea6;
 
   /* Brand Accents & Button Controls */
   --color-primary: #588dd2;          /* Cornflower accent */
@@ -66,7 +66,7 @@ html.dark {
   --color-primary-text: #ffffff;
   --color-secondary: #c0cfff;
   --color-accent: #c0cfff;
-  --glow-primary: rgba(88, 141, 210, 0.45);
+  --glow-primary: rgba(88, 141, 210, 0.35);
 
   /* Functional Status */
   --color-income: #34d399;
@@ -148,7 +148,7 @@ body {
   border: 1px solid var(--color-border);
 }
 html.dark .glass-card {
-  background: rgba(22, 49, 123, 0.85);
+  background: rgba(20, 26, 40, 0.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--color-border);

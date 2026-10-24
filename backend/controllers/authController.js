@@ -49,9 +49,32 @@ exports.signup = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("SignUp Error", error);
+    console.error("SignUp Error:", error);
+
+    // Mongoose buffering timeout (Database not reachable)
+    if (error.name === "MongooseError" && error.message.includes("buffering timed out")) {
+      return res.status(503).json({
+        message: "Database connection timed out. Please check your MongoDB Atlas connection.",
+      });
+    }
+
+    // Duplicate email key (MongoDB error code 11000)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "This email address is already registered. Please sign in instead.",
+      });
+    }
+
+    // Validation errors (e.g. password min length)
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors || {})[0]?.message;
+      return res.status(400).json({
+        message: firstError || "Invalid user registration details.",
+      });
+    }
+
     res.status(500).json({
-      message: "Server Error",
+      message: error.message || "Signup failed due to internal server error.",
     });
   }
 };
@@ -96,9 +119,16 @@ exports.login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Login Error", error);
+    console.error("Login Error:", error);
+
+    if (error.name === "MongooseError" && error.message.includes("buffering timed out")) {
+      return res.status(503).json({
+        message: "Database connection timed out. Please check your MongoDB Atlas connection.",
+      });
+    }
+
     res.status(500).json({
-      message: "Server Error",
+      message: error.message || "Login failed due to internal server error.",
     });
   }
 };

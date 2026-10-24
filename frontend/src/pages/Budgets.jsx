@@ -118,44 +118,46 @@ function Budgets() {
       />
 
       {/* Date Pickers Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400 font-semibold">Month:</span>
-          <select
-            value={month}
-            onChange={handleMonthChange}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-          >
-            {[
-              "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-            ].map((mLabel, idx) => (
-              <option key={mLabel} value={idx + 1}>
-                {mLabel}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400 font-semibold">Year:</span>
-          <select
-            value={year}
-            onChange={handleYearChange}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-          >
-            {Array.from({ length: 5 }).map((_, i) => {
-              const y = new Date().getFullYear() - 2 + i;
-              return (
-                <option key={y} value={y}>
-                  {y}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold">Month:</span>
+            <select
+              value={month}
+              onChange={handleMonthChange}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+            >
+              {[
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+              ].map((mLabel, idx) => (
+                <option key={mLabel} value={idx + 1}>
+                  {mLabel}
                 </option>
-              );
-            })}
-          </select>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold">Year:</span>
+            <select
+              value={year}
+              onChange={handleYearChange}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
+            >
+              {Array.from({ length: 5 }).map((_, i) => {
+                const y = new Date().getFullYear() - 2 + i;
+                return (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
 
-        <span className="text-xs text-slate-400 ml-auto font-medium">
+        <span className="text-xs text-slate-400 font-medium">
           Active Period: {month}/{year}
         </span>
       </div>
@@ -297,61 +299,117 @@ function Budgets() {
             No budgets defined for this month.
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                  <th className="py-3 pr-3 font-semibold">Category</th>
-                  <th className="py-3 pr-3 font-semibold">Monthly Limit</th>
-                  <th className="py-3 pr-3 font-semibold">Amount Spent</th>
-                  <th className="py-3 pr-3 font-semibold">Status</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {rows.map((row) => (
-                  <tr
-                    key={row._id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-100">
+          <>
+            {/* Mobile Card List View (< 640px) */}
+            <div className="block sm:hidden space-y-3">
+              {rows.map((row) => (
+                <div
+                  key={row._id}
+                  className="p-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-[var(--color-text-main)]">
                       {row.category}
-                    </td>
-                    <td className="py-3 pr-3 font-extrabold text-slate-900 dark:text-slate-100">
-                      {formatCurrency(row.amount)}
-                    </td>
-                    <td className="py-3 pr-3 font-bold text-slate-600 dark:text-slate-300">
-                      {formatCurrency(row.spent)}
-                    </td>
-                    <td className="py-3 pr-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          (row.percentage || 0) >= 100
-                            ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
-                            : (row.percentage || 0) >= 75
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                        }`}
-                      >
-                        {Math.round(row.percentage || 0)}%
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        (row.percentage || 0) >= 100
+                          ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                          : (row.percentage || 0) >= 75
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                      }`}
+                    >
+                      {Math.round(row.percentage || 0)}% spent
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-[var(--color-border-subtle)]">
+                    <div>
+                      <span className="text-[11px] text-[var(--color-text-muted)] block">Monthly Limit</span>
+                      <span className="font-extrabold text-[var(--color-text-main)]">
+                        {formatCurrency(row.amount)}
                       </span>
-                    </td>
-                    <td className="py-3 pr-3 text-right">
-                      <button
-                        onClick={() => handleDelete(row._id)}
-                        disabled={deleting}
-                        className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
-                        title="Delete budget"
-                      >
-                        <FiTrash2 className="text-[10px]" />
-                        <span>Delete</span>
-                      </button>
-                    </td>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-[var(--color-text-muted)] block">Spent So Far</span>
+                      <span className="font-bold text-slate-600 dark:text-slate-300">
+                        {formatCurrency(row.spent)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2 border-t border-[var(--color-border-subtle)]">
+                    <button
+                      onClick={() => handleDelete(row._id)}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
+                    >
+                      <FiTrash2 className="text-xs" />
+                      <span>Delete Budget</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (>= 640px) */}
+            <div className="hidden sm:block w-full overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                    <th className="py-3 pr-3 font-semibold">Category</th>
+                    <th className="py-3 pr-3 font-semibold">Monthly Limit</th>
+                    <th className="py-3 pr-3 font-semibold">Amount Spent</th>
+                    <th className="py-3 pr-3 font-semibold">Status</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  {rows.map((row) => (
+                    <tr
+                      key={row._id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-100">
+                        {row.category}
+                      </td>
+                      <td className="py-3 pr-3 font-extrabold text-slate-900 dark:text-slate-100">
+                        {formatCurrency(row.amount)}
+                      </td>
+                      <td className="py-3 pr-3 font-bold text-slate-600 dark:text-slate-300">
+                        {formatCurrency(row.spent)}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            (row.percentage || 0) >= 100
+                              ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                              : (row.percentage || 0) >= 75
+                              ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                          }`}
+                        >
+                          {Math.round(row.percentage || 0)}%
+                        </span>
+                      </td>
+                      <td className="py-3 pr-3 text-right">
+                        <button
+                          onClick={() => handleDelete(row._id)}
+                          disabled={deleting}
+                          className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
+                          title="Delete budget"
+                        >
+                          <FiTrash2 className="text-[10px]" />
+                          <span>Delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>

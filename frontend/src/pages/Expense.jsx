@@ -153,51 +153,100 @@ function Expense() {
             </Button>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                  <th className="py-3 pr-3 font-semibold">Date</th>
-                  <th className="py-3 pr-3 font-semibold">Category</th>
-                  <th className="py-3 pr-3 font-semibold hidden sm:table-cell">Note</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Amount</th>
-                  <th className="py-3 pr-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {expenses.map((tx) => (
-                  <tr
-                    key={tx._id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 pr-3 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+          <div>
+            {/* Mobile Card List (< 640px) */}
+            <div className="block sm:hidden space-y-2.5">
+              {expenses.map((tx) => (
+                <div
+                  key={tx._id}
+                  className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] space-y-2"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                      {tx.category || "Expense"}
+                    </span>
+                    <span className="text-[11px] text-[var(--color-text-muted)]">
                       {formatDate(tx.date)}
-                    </td>
-                    <td className="py-3 pr-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
-                        {tx.category || "Expense"}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-3 hidden sm:table-cell text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
-                      {tx.note || "-"}
-                    </td>
-                    <td className="py-3 pr-3 text-right font-extrabold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      {tx.note ? (
+                        <p className="text-xs text-[var(--color-text-main)] font-medium">
+                          {tx.note}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[var(--color-text-muted)] italic">
+                          No note
+                        </p>
+                      )}
+                    </div>
+                    <p className="font-black text-sm text-rose-600 dark:text-rose-400">
                       -{formatCurrency(tx.amount)}
-                    </td>
-                    <td className="py-3 pr-3 text-right">
-                      <button
-                        onClick={() => handleDeleteExpense(tx._id)}
-                        className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
-                        title="Delete expense"
-                      >
-                        <FiTrash2 className="text-[10px]" />
-                        <span>Delete</span>
-                      </button>
-                    </td>
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-[var(--color-border-subtle)] flex justify-end">
+                    <button
+                      onClick={() => handleDeleteExpense(tx._id)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-rose-600 hover:border-rose-300 active:scale-95 transition"
+                    >
+                      <FiTrash2 className="text-xs" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= 640px) */}
+            <div className="hidden sm:block w-full overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
+                    <th className="py-3 pr-3 font-semibold">Date</th>
+                    <th className="py-3 pr-3 font-semibold">Category</th>
+                    <th className="py-3 pr-3 font-semibold">Note</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Amount</th>
+                    <th className="py-3 pr-3 font-semibold text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border-subtle)]">
+                  {expenses.map((tx) => (
+                    <tr
+                      key={tx._id}
+                      className="hover:bg-[var(--color-surface-elevated)]/50 transition-colors"
+                    >
+                      <td className="py-3 pr-3 text-[var(--color-text-main)] whitespace-nowrap">
+                        {formatDate(tx.date)}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                          {tx.category || "Expense"}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-3 text-[var(--color-text-muted)] max-w-[200px] truncate">
+                        {tx.note || "-"}
+                      </td>
+                      <td className="py-3 pr-3 text-right font-extrabold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                        -{formatCurrency(tx.amount)}
+                      </td>
+                      <td className="py-3 pr-3 text-right">
+                        <button
+                          onClick={() => handleDeleteExpense(tx._id)}
+                          className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 transition cursor-pointer"
+                          title="Delete expense"
+                        >
+                          <FiTrash2 className="text-[10px]" />
+                          <span>Delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>
@@ -205,8 +254,8 @@ function Expense() {
       {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-6 transition-all transform scale-100">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-full max-w-lg bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl shadow-2xl p-5 sm:p-6 max-h-[92vh] overflow-y-auto transition-all transform scale-100">
+            <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-4 pb-3 border-b border-[var(--color-border)]">
               Record New Expense
             </h3>
             <TransactionForm

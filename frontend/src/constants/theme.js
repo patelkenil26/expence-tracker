@@ -67,31 +67,31 @@ export const COLOR_COMBINATIONS = [
 
   {
     id: "combo2",
-    name: "Blue (Skin), Cornflower, Periwinkle & Pearl",
+    name: "Blue (Skin), Cornflower, Periwinkle & Pearl (Refined Balanced)",
     raw: {
       blueSkin: "#10276b",
       cornflower: "#588dd2",
       periwinkle: "#c0cfff",
       pearl: "#f4f1ee",
     },
-    // Dark mode variables
+    // Dark mode variables: Refined deep midnight obsidian (non-fatiguing, eye-friendly, Cornflower glowing accent)
     dark: {
-      "--color-bg-base": "#10276b",
-      "--color-surface": "#16317b",
-      "--color-surface-elevated": "#1e3e94",
-      "--color-border": "#284fa8",
-      "--color-border-subtle": "rgba(192, 207, 255, 0.2)",
+      "--color-bg-base": "#0c101a",
+      "--color-surface": "#141a28",
+      "--color-surface-elevated": "#1b2336",
+      "--color-border": "#222d42",
+      "--color-border-subtle": "rgba(192, 207, 255, 0.1)",
       "--color-border-focus": "#588dd2",
       "--color-primary": "#588dd2",
       "--color-primary-hover": "#4778b8",
       "--color-primary-text": "#ffffff",
       "--color-text-main": "#f4f1ee",
       "--color-text-secondary": "#c0cfff",
-      "--color-text-muted": "#c0cfff",
-      "--color-accent": "#c0cfff",
-      "--glow-primary": "rgba(88, 141, 210, 0.45)",
+      "--color-text-muted": "#7d8ea6",
+      "--color-accent": "#588dd2",
+      "--glow-primary": "rgba(88, 141, 210, 0.35)",
     },
-    // Light mode variables
+    // Light mode variables: Clean pearl canvas with deep navy text and cornflower accent
     light: {
       "--color-bg-base": "#f4f1ee",
       "--color-surface": "#ffffff",
@@ -112,6 +112,110 @@ export const COLOR_COMBINATIONS = [
       "#588dd2",
       "#c0cfff",
       "#10276b",
+      "#10b981",
+      "#f59e0b",
+      "#f43f5e",
+      "#8b5cf6",
+    ],
+  },
+
+  {
+    id: "combo2_pure_dark",
+    name: "Combo 2 — Pure OLED Charcoal & Cornflower",
+    raw: {
+      blueSkin: "#10276b",
+      cornflower: "#588dd2",
+      periwinkle: "#c0cfff",
+      pearl: "#f4f1ee",
+    },
+    dark: {
+      "--color-bg-base": "#090c13",
+      "--color-surface": "#111622",
+      "--color-surface-elevated": "#181f2f",
+      "--color-border": "#1e273a",
+      "--color-border-subtle": "rgba(192, 207, 255, 0.08)",
+      "--color-border-focus": "#588dd2",
+      "--color-primary": "#588dd2",
+      "--color-primary-hover": "#4778b8",
+      "--color-primary-text": "#ffffff",
+      "--color-text-main": "#f4f1ee",
+      "--color-text-secondary": "#c0cfff",
+      "--color-text-muted": "#758399",
+      "--color-accent": "#588dd2",
+      "--glow-primary": "rgba(88, 141, 210, 0.35)",
+    },
+    light: {
+      "--color-bg-base": "#f4f1ee",
+      "--color-surface": "#ffffff",
+      "--color-surface-elevated": "#ffffff",
+      "--color-border": "#c0cfff",
+      "--color-border-subtle": "rgba(192, 207, 255, 0.5)",
+      "--color-border-focus": "#588dd2",
+      "--color-primary": "#588dd2",
+      "--color-primary-hover": "#4778b8",
+      "--color-primary-text": "#ffffff",
+      "--color-text-main": "#10276b",
+      "--color-text-secondary": "#10276b",
+      "--color-text-muted": "#4a6096",
+      "--color-accent": "#588dd2",
+      "--glow-primary": "rgba(88, 141, 210, 0.25)",
+    },
+    charts: [
+      "#588dd2",
+      "#c0cfff",
+      "#10276b",
+      "#10b981",
+      "#f59e0b",
+      "#f43f5e",
+      "#8b5cf6",
+    ],
+  },
+
+  {
+    id: "combo2_slate",
+    name: "Combo 2 — Deep Slate & Cornflower (Linear Style)",
+    raw: {
+      blueSkin: "#10276b",
+      cornflower: "#588dd2",
+      periwinkle: "#c0cfff",
+      pearl: "#f4f1ee",
+    },
+    dark: {
+      "--color-bg-base": "#0f172a",
+      "--color-surface": "#1e293b",
+      "--color-surface-elevated": "#273549",
+      "--color-border": "#334155",
+      "--color-border-subtle": "rgba(51, 65, 85, 0.6)",
+      "--color-border-focus": "#588dd2",
+      "--color-primary": "#588dd2",
+      "--color-primary-hover": "#4778b8",
+      "--color-primary-text": "#ffffff",
+      "--color-text-main": "#f4f1ee",
+      "--color-text-secondary": "#c0cfff",
+      "--color-text-muted": "#94a3b8",
+      "--color-accent": "#38bdf8",
+      "--glow-primary": "rgba(88, 141, 210, 0.35)",
+    },
+    light: {
+      "--color-bg-base": "#f4f1ee",
+      "--color-surface": "#ffffff",
+      "--color-surface-elevated": "#ffffff",
+      "--color-border": "#c0cfff",
+      "--color-border-subtle": "rgba(192, 207, 255, 0.5)",
+      "--color-border-focus": "#588dd2",
+      "--color-primary": "#588dd2",
+      "--color-primary-hover": "#4778b8",
+      "--color-primary-text": "#ffffff",
+      "--color-text-main": "#10276b",
+      "--color-text-secondary": "#10276b",
+      "--color-text-muted": "#4a6096",
+      "--color-accent": "#588dd2",
+      "--glow-primary": "rgba(88, 141, 210, 0.25)",
+    },
+    charts: [
+      "#588dd2",
+      "#c0cfff",
+      "#38bdf8",
       "#10b981",
       "#f59e0b",
       "#f43f5e",
@@ -307,16 +411,18 @@ export const THEME_PALETTES = COLOR_COMBINATIONS.reduce((acc, combo) => {
  * =========================================================================
  * >>> ACTIVE THEME SELECTOR <<<
  * Theme switch karne ke liye sirf yaha name change karo:
- *   "combo1" -> Ice Cyan & Midnight Obsidian
- *   "combo2" -> Blue (Skin), Cornflower, Periwinkle & Pearl
- *   "combo3" -> Ocean, Sun & Sky (Blue & Gold) [Image 1] (NEW)
- *   "combo4" -> Mindful Marine & Golden Amber [Image 2 - Alex Cristache] (NEW)
- *   "combo5" -> Uxintace Electric Blue & Sunset Amber [Image 3] (NEW)
+ *   "combo2"           -> Blue (Skin), Cornflower, Periwinkle & Pearl [Refined Balanced Dark - ACTIVE]
+ *   "combo2_pure_dark" -> Combo 2 Pure OLED Charcoal & Cornflower Dark
+ *   "combo2_slate"     -> Combo 2 Deep Slate & Cornflower (Linear Style)
+ *   "combo1"           -> Ice Cyan & Midnight Obsidian
+ *   "combo3"           -> Ocean, Sun & Sky (Blue & Gold) [Image 1]
+ *   "combo4"           -> Mindful Marine & Golden Amber [Image 2 - Alex Cristache]
+ *   "combo5"           -> Uxintace Electric Blue & Sunset Amber [Image 3]
  * 
  * Koi bhi doosri file ko change karne ki bilkul zaroorat nahi hai!
  * =========================================================================
  */
-export const ACTIVE_PALETTE_NAME = "combo5";
+export const ACTIVE_PALETTE_NAME = "combo2";
 
 // Exported active theme combination
 export const ACTIVE_PALETTE =

@@ -13,6 +13,17 @@ const budgetRoutes = require("./routes/budgetRoutes");
 const goalRoutes = require("./routes/goalRoutes");
 const alertsRoutes = require("./routes/alertsRoutes");
 
+const dns = require("dns");
+
+// =========================================================================
+// Fix for Windows & Local ISP DNS SRV Lookup (querySrv ECONNREFUSED)
+// =========================================================================
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (err) {
+  // Safe fallback
+}
+
 dotenv.config();
 
 // =========================================================================
@@ -26,7 +37,7 @@ dotenv.config();
 // const CLIENT_URL = "http://localhost:5173"; // <-- UNCOMMENT FOR LOCALHOST
 // const CLIENT_URL = "https://expence-tracker-beta-gray.vercel.app"; // <-- UNCOMMENT FOR PRODUCTION
 // =========================================================================
-
+  
 const allowedOrigins = [
   "http://localhost:5173",                          // Local Vite Frontend
   "http://localhost:5174",                          // Alternate local port
@@ -56,6 +67,17 @@ app.use(
 );
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+// Instant check: If database is disconnected, inform client immediately instead of 10s buffer timeout
+app.use("/api", (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message: "Database is not connected. Please check your MongoDB connection.",
+    });
+  }
+  next();
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/stats", statesRoutes);
